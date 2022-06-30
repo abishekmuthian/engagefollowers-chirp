@@ -5,8 +5,8 @@ After=network.target
 
 [Service]
 Type=notify
-User=ubuntu
-Group=ubuntu
+User=engagefollowers
+Group=engagefollowers
 
 RuntimeDirectory=gunicorn
 WorkingDirectory=/home/engagefollowers/engagefollowers

@@ -1,0 +1,26 @@
+[Unit]
+Description=Gunicorn
+ConditionPathExists=/home/engagefollowers/engagefollowers
+After=network.target
+
+[Service]
+Type=notify
+User=ubuntu
+Group=ubuntu
+
+RuntimeDirectory=gunicorn
+WorkingDirectory=/home/engagefollowers/engagefollowers
+ExecStart=/home/ubuntu/.local/bin/gunicorn --workers 2 --preload --worker-class=uvicorn.workers.UvicornWorker main:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+PermissionsStartOnly=true
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=gunicorn
+
+
+[Install]
+WantedBy=multi-user.target

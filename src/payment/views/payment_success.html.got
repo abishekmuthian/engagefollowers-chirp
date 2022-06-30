@@ -1,0 +1,16 @@
+<article class="narrow subscription">
+    <h1>Payment</h1>
+    <br/>
+    <p>Your payment was successful!</p>
+    <br/>
+    <p>You can now see insights for problems on the top of each problem like weekly unique views with top 3 countries,
+    Monthly unique views with top 3 countries.<br/>
+    Note: Newer problems less than a week old will not have weekly insights.</p>
+    <br/>
+    <p>You can subscribe to problems by clicking 'WHO NEEDS THIS' button to receive email
+    notifications when there is a new comment and for monthly insights for the problems
+    through email.</p>
+    <br/>
+    <p>You can view your subscriptions in your profile setting by clicking 'EDIT'
+    in your profile.</p>
+</article>

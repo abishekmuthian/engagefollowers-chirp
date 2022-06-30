@@ -1,0 +1,16 @@
+.DS_Store
+*-workspace
+bin/*
+db/backup/*
+log/*
+certs/*
+vendor
+secrets/assets.json
+public/assets/scripts/app-*
+public/assets/styles/app-*
+hntokindle
+.idea/*
+.vscode/*
+pdfs/*
+mobis/*
+/models/

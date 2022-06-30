@@ -9,7 +9,9 @@ certs/*
 vendor
 secrets/assets.json
 public/assets/scripts/app-*
+!public/assets/scripts/.gitkeep
 public/assets/styles/app-*
+!public/assets/styles/.gitkeep
 engagefollowers
 .idea/*
 .vscode/*

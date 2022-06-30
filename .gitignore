@@ -3,14 +3,13 @@
 bin/*
 db/backup/*
 log/*
+!log/.gitkeep
 certs/*
+!certs/.gitkeep
 vendor
 secrets/assets.json
 public/assets/scripts/app-*
 public/assets/styles/app-*
-hntokindle
+engagefollowers
 .idea/*
 .vscode/*
-pdfs/*
-mobis/*
-/models/

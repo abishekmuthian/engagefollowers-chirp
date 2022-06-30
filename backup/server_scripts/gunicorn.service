@@ -10,7 +10,7 @@ Group=ubuntu
 
 RuntimeDirectory=gunicorn
 WorkingDirectory=/home/engagefollowers/engagefollowers
-ExecStart=/home/engagefollowers/.local/bin/gunicorn --workers 3 --preload --worker-class=uvicorn.workers.UvicornWorker main:app
+ExecStart=/usr/bin/gunicorn --workers 3 --preload --worker-class=uvicorn.workers.UvicornWorker main:app
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=mixed
 TimeoutStopSec=5

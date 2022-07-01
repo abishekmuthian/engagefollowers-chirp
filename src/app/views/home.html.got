@@ -213,7 +213,7 @@
                         <p>Topics have been removed, Tweets from your followers cannot be filtered.</p>
                     {{ end }}
                     {{ if eq .notice "topics_added"}}
-                        <p>Topics have been added, Now you will receive tweets from your followers which matches the
+                        <p>Topics have been added, Now you will receive tweets from your followers which matches these
                             topics.</p>
                     {{ end }}
                 </section>

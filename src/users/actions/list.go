@@ -520,7 +520,7 @@ func classifyTweet(tweetText string, keywords []string) []string {
 
 		responseBody := bytes.NewBuffer(postBody)
 		//Leverage Go's HTTP Post function to make request
-		resp, err := http.Post("http://192.168.3.159:8000/classification", "application/json", responseBody)
+		resp, err := http.Post(config.Get("classifier_server"), "application/json", responseBody)
 		//Handle Error
 		if err != nil {
 			log.Info(log.V{"Bert, An Error Occurred": err})

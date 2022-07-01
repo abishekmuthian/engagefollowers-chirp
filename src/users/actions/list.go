@@ -335,7 +335,7 @@ func GetTweetsOfFollowers() {
 					if err == nil && listExists && (user.AutoLike || user.Notification) {
 						listTweetLookupInput := listTweetLookupInput.ListInput{
 							ID:              user.TwitterListID,
-							MaxResults:      5,
+							MaxResults:      15,
 							PaginationToken: "",
 							Expansions: fields.ExpansionList{
 								fields.ExpansionAuthorID,

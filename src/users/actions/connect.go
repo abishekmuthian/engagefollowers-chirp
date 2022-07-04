@@ -239,7 +239,7 @@ func HandleConnect(w http.ResponseWriter, r *http.Request) error {
 
 }
 
-func getDetailedError(err error) {
+func getDetailedError(err error) int {
 	// more error information
 	ge := err.(*gotwi.GotwiError)
 	if ge.OnAPI {
@@ -263,4 +263,6 @@ func getDetailedError(err error) {
 			log.Error(log.V{"Twitter Rate Limit info reset at : ": ge.RateLimitInfo.ResetAt})
 		}
 	}
+
+	return ge.StatusCode
 }

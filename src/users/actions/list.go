@@ -243,7 +243,7 @@ func GetTweetsOfFollowers() {
 				token, err := getTwitterAccessToken(user.TwitterRefreshToken)
 				twitterAccessToken = token.AccessToken
 
-				if err == nil && token.AccessToken != "" {
+				if err == nil {
 					t := time.Now().UTC()
 
 					if token.ExpiresIn == 7200 {
@@ -266,15 +266,13 @@ func GetTweetsOfFollowers() {
 
 				} else {
 					log.Error(log.V{"Error retrieving access token from refresh token: ": err})
-					askUserToConnectTwitter(rdb, ctx, user)
+					errCode := getDetailedError(err)
+
+					if errCode == 401 {
+						askUserToConnectTwitter(rdb, ctx, user)
+					}
 					continue
 				}
-			}
-
-			// Check if the user is connected to Twitter
-			if !user.TwitterConnected {
-				askUserToConnectTwitter(rdb, ctx, user)
-				continue
 			}
 
 			in := &gotwi.NewClientWithAccessTokenInput{
@@ -419,13 +417,19 @@ func GetTweetsOfFollowers() {
 					}
 				} else {
 					log.Error(log.V{"Twitter user lookup failed": err})
-					getDetailedError(err)
-					askUserToConnectTwitter(rdb, ctx, user)
+					errCode := getDetailedError(err)
+					if errCode == 401 {
+						askUserToConnectTwitter(rdb, ctx, user)
+					}
 				}
 
 			} else {
 				log.Error(log.V{"Error in Gotwi client": err})
-				getDetailedError(err)
+				errCode := getDetailedError(err)
+				if errCode == 401 {
+					askUserToConnectTwitter(rdb, ctx, user)
+				}
+				continue
 			}
 
 		}
@@ -443,11 +447,19 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 				currentTime := time.Now().UTC()
 				elapsedTime := currentTime.Sub(parsedTime).Hours()
 
-				if elapsedTime > 24 {
-					sendTwitterConnectEmail = true
+				// Check if twitter unauthorized error has been occurring for more than 10 times today
+				askTwitterConnectCount, err := rdb.Get(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix")).Int()
+
+				if err == nil || err.Error() == "redis: nil" {
+					if elapsedTime > 24 && askTwitterConnectCount%10 == 0 {
+						sendTwitterConnectEmail = true
+					} else {
+						sendTwitterConnectEmail = false
+					}
 				} else {
-					sendTwitterConnectEmail = false
+					log.Error(log.V{"Error retrieving askTwitterConnectCount from redis": err})
 				}
+
 			}
 		}
 	} else if err.Error() == "redis: nil" {
@@ -489,6 +501,9 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 			}
 		}
 	}
+
+	// Set the number of times this function as been called
+	rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix"), 1)
 }
 
 func classifyTweet(tweetText string, keywords []string) []string {

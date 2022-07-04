@@ -307,6 +307,10 @@
                     Is this allowed by Twitter?
                     <p>Absolutely, engage followers uses the official Twitter API and ensures that all guidelines are followed.</p>
                 </li>
+                <li>
+                    Where can I follow the development of engage followers?
+                    <p>I'm building engage followers in public, on <a href="https://twitter.com/Abishek_Muthian/status/1542754615464427521" target="_blank">Twitter</a> </p>
+                </li>
             </ul>
         </div>
 </section>
@@ -320,6 +324,9 @@
     </header>
     <div class="change_log">
         <ul>
+            <li>
+                4 July 2022: Improved reliability of detecting whether Twitter account connection has been lost.
+            </li>
             <li>
                 1 July 2022: Early access release of engage followers.
             </li>

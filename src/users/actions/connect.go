@@ -57,13 +57,13 @@ func HandleConnect(w http.ResponseWriter, r *http.Request) error {
 		log.Error(log.V{"Error in receiving HTTP get from Twitter": err})
 	}
 
-	log.Info(log.V{"REQUEST: ": string(reqDump)})
+	log.Info(log.V{"REQUEST": string(reqDump)})
 
 	state := params.Get("state")
-	log.Info(log.V{"Url Param 'state' is: ": string(state)})
+	log.Info(log.V{"Url Param 'state' is": string(state)})
 
 	code := params.Get("code")
-	log.Info(log.V{"Url Param 'code' is: ": string(code)})
+	log.Info(log.V{"Url Param 'code' is": string(code)})
 
 	err = auth.CheckAuthenticityToken(state, r)
 
@@ -95,17 +95,17 @@ func HandleConnect(w http.ResponseWriter, r *http.Request) error {
 				if err == nil {
 					body, err := ioutil.ReadAll(resp.Body)
 					if err != nil {
-						log.Error(log.V{"Error: ": err})
+						log.Error(log.V{"Error": err})
 					}
 					//Convert the body to type string
 					sb := string(body)
-					log.Info(log.V{"Twitter Response: ": sb})
+					log.Info(log.V{"Twitter Response": sb})
 
 					token := Token{}
 					json.Unmarshal(body, &token)
 
 					if token.Error != "" {
-						log.Error(log.V{"Twitter connect Error: ": token.Error, "Error description: ": token.ErrorDescription})
+						log.Error(log.V{"Twitter connect Error": token.Error, "Error description": token.ErrorDescription})
 						return server.Redirect(w, r, "/?error=failed_twitter_connect#connect")
 					}
 
@@ -144,10 +144,10 @@ func HandleConnect(w http.ResponseWriter, r *http.Request) error {
 
 					if err == nil {
 
-						log.Info(log.V{"ID: ": gotwi.StringValue(u.Data.ID)})
-						log.Info(log.V{"Name: ": gotwi.StringValue(u.Data.Name)})
-						log.Info(log.V{"Username: ": gotwi.StringValue(u.Data.Username)})
-						log.Info(log.V{"CreatedAt: ": u.Data.CreatedAt})
+						log.Info(log.V{"ID": gotwi.StringValue(u.Data.ID)})
+						log.Info(log.V{"Name": gotwi.StringValue(u.Data.Name)})
+						log.Info(log.V{"Username": gotwi.StringValue(u.Data.Username)})
+						log.Info(log.V{"CreatedAt": u.Data.CreatedAt})
 
 						userParams := make(map[string]string)
 
@@ -250,17 +250,17 @@ func getDetailedError(err error) int {
 		log.Error(log.V{"Twitter error status code ": ge.StatusCode})
 
 		for _, ae := range ge.APIErrors {
-			log.Error(log.V{"Twitter API error message: ": ae.Message})
-			log.Error(log.V{"Twitter API error label: ": ae.Label})
-			log.Error(log.V{"Twitter API error parameters: ": ae.Parameters})
-			log.Error(log.V{"Twitter API error code: ": ae.Code})
-			log.Error(log.V{"Twitter API error code detail: ": ae.Code.Detail()})
+			log.Error(log.V{"Twitter API error message": ae.Message})
+			log.Error(log.V{"Twitter API error label": ae.Label})
+			log.Error(log.V{"Twitter API error parameters": ae.Parameters})
+			log.Error(log.V{"Twitter API error code": ae.Code})
+			log.Error(log.V{"Twitter API error code detail": ae.Code.Detail()})
 		}
 
 		if ge.RateLimitInfo != nil {
-			log.Error(log.V{"Twitter Rate Limit info limit : ": ge.RateLimitInfo.Limit})
-			log.Error(log.V{"Twitter Rate Limit info remaining : ": ge.RateLimitInfo.Remaining})
-			log.Error(log.V{"Twitter Rate Limit info reset at : ": ge.RateLimitInfo.ResetAt})
+			log.Error(log.V{"Twitter Rate Limit info limit": ge.RateLimitInfo.Limit})
+			log.Error(log.V{"Twitter Rate Limit info remaining": ge.RateLimitInfo.Remaining})
+			log.Error(log.V{"Twitter Rate Limit info reset at": ge.RateLimitInfo.ResetAt})
 		}
 	}
 

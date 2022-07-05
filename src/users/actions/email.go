@@ -9,6 +9,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func EmailDailyDigest() {
@@ -75,5 +76,61 @@ func EmailDailyDigest() {
 				log.Error(log.V{"Error retrieving tweets for sending email digest": err})
 			}
 		}
+	}
+}
+
+func sendTwitterConnectEmail(user *userModel.User, rdb *redis.Client, ctx context.Context) {
+	// Mandrill implementation
+	client := m.ClientWithKey(config.Get("mandrill_key"))
+
+	message := &m.Message{}
+	message.AddRecipient(user.Email, user.Name, "to")
+	message.FromEmail = config.Get("email_digest_email")
+	message.FromName = config.Get("email_from_name")
+	message.Subject = config.Get("email_twitter_connect_subject")
+
+	// Global vars
+	message.GlobalMergeVars = m.MapToVars(map[string]interface{}{"FNAME": user.Name})
+	templateContent := map[string]string{}
+
+	response, err := client.MessagesSendTemplate(message, config.Get("mailchimp_twitter_connect_template"), templateContent)
+	if err != nil {
+		log.Error(log.V{"msg": "Twitter connect email, error sending password reset email", "error": err})
+	} else {
+		log.Info(log.V{"msg": "Twitter connect email, response from the server", "response": response})
+
+		// store the time to avoid sending the email again immediately
+		rdb.Set(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_twitter_connection_suffix"), time.Now().UTC().String(), 0)
+
+		// Change the Twitter Connected status to false
+		userParams := make(map[string]string)
+		userParams["twitter_connected"] = "False"
+
+		err = user.Update(userParams)
+		if err != nil {
+			log.Error(log.V{"Error updating twitter connected status in user": err})
+		}
+	}
+}
+
+func sendAdminEmail(user *userModel.User, subject string, errorMessage string) {
+	// Mandrill implementation
+	client := m.ClientWithKey(config.Get("mandrill_key"))
+
+	message := &m.Message{}
+	message.AddRecipient(config.Get("admin_email"), config.Get("admin_name"), "to")
+	message.FromEmail = config.Get("email_digest_email")
+	message.FromName = config.Get("email_from_name")
+	message.Subject = subject
+
+	// Global vars
+	message.GlobalMergeVars = m.MapToVars(map[string]interface{}{"FNAME": config.Get("admin_name"), "TNAME": user.Name, "TUNAME": user.TwitterUsername, "ERROR": errorMessage})
+	templateContent := map[string]string{}
+
+	response, err := client.MessagesSendTemplate(message, config.Get("mailchimp_admin_email_template"), templateContent)
+	if err != nil {
+		log.Error(log.V{"msg": "Twitter connect email to admin, error sending password reset email", "error": err})
+	} else {
+		log.Info(log.V{"msg": "Twitter connect email to admin, response from the server", "response": response})
 	}
 }

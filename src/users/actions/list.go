@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	m "github.com/abishekmuthian/engagefollowers/src/lib/mandrill"
 	"github.com/abishekmuthian/engagefollowers/src/lib/query"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/config"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/log"
@@ -65,7 +64,7 @@ func getFollowers(c *gotwi.Client, user *userModel.User) {
 		}
 	}
 
-	log.Info(log.V{"Retrieved Followers: ": len(followerIDs)})
+	log.Info(log.V{"Retrieved Followers": len(followerIDs)})
 
 	if len(followerIDs) > 0 {
 		err := UpdateFollowers(followerIDs, user.ID)
@@ -91,7 +90,7 @@ func createList(c *gotwi.Client, user *userModel.User) {
 
 		listID := listCreateOutput.Data.ID
 
-		log.Info(log.V{"listID: ": listID})
+		log.Info(log.V{"listID": listID})
 
 		userParams := make(map[string]string)
 		userParams["twitter_list_id"] = listID
@@ -110,7 +109,7 @@ func createList(c *gotwi.Client, user *userModel.User) {
 				listDeleteOutput, err := managelist.Delete(context.Background(), c, &listDeleteInput)
 
 				if err == nil {
-					log.Info(log.V{"Existing Twitter List deleted: ": listDeleteOutput.Data.Deleted})
+					log.Info(log.V{"Existing Twitter List deleted": listDeleteOutput.Data.Deleted})
 				} else {
 					log.Error(log.V{"Error deleting existing Twitter list": err})
 					getDetailedError(err)
@@ -127,7 +126,7 @@ func createList(c *gotwi.Client, user *userModel.User) {
 
 func addMembersToList(c *gotwi.Client, user *userModel.User) {
 
-	log.Info(log.V{"User Followers: ": len(user.TwitterFollowers)})
+	log.Info(log.V{"User Followers": len(user.TwitterFollowers)})
 
 	var limitedFollowers []string
 	if len(user.TwitterFollowers) > 100 {
@@ -155,20 +154,20 @@ func addMembersToList(c *gotwi.Client, user *userModel.User) {
 				listMemberCreateOutput, err := listmember.Create(context.Background(), c, &listCreateInput)
 
 				if err == nil {
-					log.Info(log.V{"List member: ": follower, "Added: ": listMemberCreateOutput.Data.IsMember})
+					log.Info(log.V{"List member": follower, "Added": listMemberCreateOutput.Data.IsMember})
 				} else {
-					log.Info(log.V{"Error adding member to the list: ": follower, "Error": err})
+					log.Info(log.V{"Error adding member to the list": follower, "Error": err})
 					getDetailedError(err)
 				}
 
 			}
 		} else {
-			log.Error(log.V{"Error in accessing the list for adding members, so continuing: ": err})
+			log.Error(log.V{"Error in accessing the list for adding members, so continuing": err})
 
 		}
 
 	} else {
-		log.Error(log.V{"No followers retrieved: ": "Length of limited followers is 0"})
+		log.Error(log.V{"No followers retrieved": "Length of limited followers is 0"})
 	}
 
 }
@@ -186,14 +185,14 @@ func checkIfListExists(listID string, c *gotwi.Client) (bool, error) {
 
 	if err == nil {
 		if gotwi.StringValue(listLookupOutput.Data.ID) == listID {
-			log.Info(log.V{"List exists: ": listID})
+			log.Info(log.V{"List exists": listID})
 			return true, err
 		} else {
-			log.Error(log.V{"List does not exist: ": listID})
+			log.Error(log.V{"List does not exist": listID})
 			return false, err
 		}
 	} else {
-		log.Error(log.V{"Error in List Lookup: ": err})
+		log.Error(log.V{"Error in List Lookup": err})
 	}
 	return false, err
 }
@@ -228,7 +227,7 @@ func GetTweetsOfFollowers() {
 			twitterAccessToken := user.TwitterAccessToken
 
 			if user.TwitterAccessToken == "" {
-				askUserToConnectTwitter(rdb, ctx, user)
+				askUserToConnectTwitter(rdb, ctx, user, "user has not connected the account yet")
 				continue
 			}
 
@@ -238,7 +237,7 @@ func GetTweetsOfFollowers() {
 			elapsedTime := currentTime.Sub(expiryTime).Hours()
 
 			if elapsedTime >= 0 && user.TwitterConnected {
-				log.Info(log.V{"Twitter Access Token: ": "expired"})
+				log.Info(log.V{"Twitter Access Token": "expired"})
 
 				token, err := getTwitterAccessToken(user.TwitterRefreshToken)
 				twitterAccessToken = token.AccessToken
@@ -265,11 +264,11 @@ func GetTweetsOfFollowers() {
 					}
 
 				} else {
-					log.Error(log.V{"Error retrieving access token from refresh token: ": err})
+					log.Error(log.V{"Error retrieving access token from refresh token": err})
 					errCode := getDetailedError(err)
 
 					if errCode == 401 {
-						askUserToConnectTwitter(rdb, ctx, user)
+						askUserToConnectTwitter(rdb, ctx, user, "401: Unauthorized error")
 					}
 					continue
 				}
@@ -293,10 +292,10 @@ func GetTweetsOfFollowers() {
 				u, err := userlookup.GetMe(context.Background(), c, p)
 
 				if err == nil {
-					log.Info(log.V{"ID: ": gotwi.StringValue(u.Data.ID)})
-					log.Info(log.V{"Name: ": gotwi.StringValue(u.Data.Name)})
-					log.Info(log.V{"Username: ": gotwi.StringValue(u.Data.Username)})
-					log.Info(log.V{"Followers Count: ": gotwi.IntValue(u.Data.PublicMetrics.FollowersCount)})
+					log.Info(log.V{"ID": gotwi.StringValue(u.Data.ID)})
+					log.Info(log.V{"Name": gotwi.StringValue(u.Data.Name)})
+					log.Info(log.V{"Username": gotwi.StringValue(u.Data.Username)})
+					log.Info(log.V{"Followers Count": gotwi.IntValue(u.Data.PublicMetrics.FollowersCount)})
 
 					// Check if the list is older than 24 hours
 					currentTime := time.Now().UTC()
@@ -357,15 +356,15 @@ func GetTweetsOfFollowers() {
 
 							for _, tweet := range listTweetLookupOutput.Data {
 								if !rdb.SIsMember(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_tweet_ids_suffix"), gotwi.StringValue(tweet.ID)).Val() {
-									log.Info(log.V{"Twitter retrieved for user: ": user.TwitterUsername})
-									log.Info(log.V{"Tweet ID: ": gotwi.StringValue(tweet.ID)})
-									log.Info(log.V{"Tweet Field Author ID: ": gotwi.StringValue(tweet.AuthorID)})
+									log.Info(log.V{"Twitter retrieved for user": user.TwitterUsername})
+									log.Info(log.V{"Tweet ID": gotwi.StringValue(tweet.ID)})
+									log.Info(log.V{"Tweet Field Author ID": gotwi.StringValue(tweet.AuthorID)})
 									authorID := gotwi.StringValue(tweet.AuthorID)
-									log.Info(log.V{"Tweet Possibly Sensitive: ": gotwi.BoolValue(tweet.PossiblySensitive)})
-									log.Info(log.V{"Tweet Text: ": gotwi.StringValue(tweet.Text)})
+									log.Info(log.V{"Tweet Possibly Sensitive": gotwi.BoolValue(tweet.PossiblySensitive)})
+									log.Info(log.V{"Tweet Text": gotwi.StringValue(tweet.Text)})
 
 									if gotwi.BoolValue(tweet.PossiblySensitive) {
-										log.Info(log.V{"Tweet potentially sensitive, so skipping: ": gotwi.StringValue(tweet.Text)})
+										log.Info(log.V{"Tweet potentially sensitive, so skipping": gotwi.StringValue(tweet.Text)})
 										continue
 									}
 
@@ -373,10 +372,10 @@ func GetTweetsOfFollowers() {
 
 									for _, tweetUserFields := range listTweetLookupOutput.Includes.Users {
 										if authorID == gotwi.StringValue(tweetUserFields.ID) {
-											log.Info(log.V{"Tweet User Field Author ID: ": gotwi.StringValue(tweetUserFields.ID)})
-											log.Info(log.V{"Tweet User Field Author UserName: ": gotwi.StringValue(tweetUserFields.Username)})
+											log.Info(log.V{"Tweet User Field Author ID": gotwi.StringValue(tweetUserFields.ID)})
+											log.Info(log.V{"Tweet User Field Author UserName": gotwi.StringValue(tweetUserFields.Username)})
 											tweetUserName = gotwi.StringValue(tweetUserFields.Username)
-											log.Info(log.V{"Tweet User Field Author Name: ": gotwi.StringValue(tweetUserFields.Name)})
+											log.Info(log.V{"Tweet User Field Author Name": gotwi.StringValue(tweetUserFields.Name)})
 											tweetRealName = gotwi.StringValue(tweetUserFields.Name)
 										}
 									}
@@ -385,18 +384,18 @@ func GetTweetsOfFollowers() {
 										categories := classifyTweet(gotwi.StringValue(tweet.Text), user.Keywords)
 
 										if len(categories) > 0 {
-											log.Info(log.V{"Tweet matches categories: ": categories})
+											log.Info(log.V{"Tweet matches categories": categories})
 											tweetText := "<br/><br/>" + gotwi.StringValue(tweet.Text) + "<br/><br/>" + "From " + tweetRealName + "(" + "<a style='color: #1363DF;' href='https://twitter.com/" + tweetUserName + "/" + "status/" + gotwi.StringValue(tweet.ID) + "'>" + "@" + tweetUserName + "</a>" + ")" + "<br/><br/>" + "Matches topics: " + fmt.Sprintf("%v", categories) + "<br/><br/>" + "<hr>"
-											log.Info(log.V{"Formatted Tweet: ": tweetText})
+											log.Info(log.V{"Formatted Tweet": tweetText})
 											rdb.SAdd(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_tweets_suffix"), tweetText)
 
 											if user.AutoLike {
 												err := likeTweets(user.TwitterId, gotwi.StringValue(tweet.ID), c)
 
 												if err == nil {
-													log.Info(log.V{"Liked Tweet: ": tweetText})
+													log.Info(log.V{"Liked Tweet": tweetText})
 												} else {
-													log.Error(log.V{"Error liking tweet: ": err})
+													log.Error(log.V{"Error liking tweet": err})
 													getDetailedError(err)
 												}
 											}
@@ -405,12 +404,12 @@ func GetTweetsOfFollowers() {
 
 									rdb.SAdd(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_tweet_ids_suffix"), gotwi.StringValue(tweet.ID))
 								} else {
-									log.Info(log.V{"Tweet already processed, So do nothing: ": gotwi.StringValue(tweet.Text)})
+									log.Info(log.V{"Tweet already processed, So do nothing": gotwi.StringValue(tweet.Text)})
 								}
 							}
 						}
 					} else {
-						log.Error(log.V{"Unable to find the list for tweet lookup: ": err})
+						log.Error(log.V{"Unable to find the list for tweet lookup": err})
 						log.Info(log.V{"User Auto Like": user.AutoLike, "User Notification": user.Notification, "List exists:": listExists})
 						// TODO send user email ABOUT both auto-like and notification is disabled
 						continue
@@ -419,7 +418,7 @@ func GetTweetsOfFollowers() {
 					log.Error(log.V{"Twitter user lookup failed": err})
 					errCode := getDetailedError(err)
 					if errCode == 401 {
-						askUserToConnectTwitter(rdb, ctx, user)
+						askUserToConnectTwitter(rdb, ctx, user, "401: Unauthorized error")
 					}
 				}
 
@@ -427,7 +426,7 @@ func GetTweetsOfFollowers() {
 				log.Error(log.V{"Error in Gotwi client": err})
 				errCode := getDetailedError(err)
 				if errCode == 401 {
-					askUserToConnectTwitter(rdb, ctx, user)
+					askUserToConnectTwitter(rdb, ctx, user, "401: Unauthorized error")
 				}
 				continue
 			}
@@ -436,9 +435,8 @@ func GetTweetsOfFollowers() {
 	}
 }
 
-func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userModel.User) {
+func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userModel.User, errMessage string) {
 	twitterConnectEmailTime, err := rdb.Get(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_twitter_connection_suffix")).Result()
-	var sendTwitterConnectEmail bool
 
 	if err == nil {
 		if twitterConnectEmailTime != "" {
@@ -451,10 +449,12 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 				askTwitterConnectCount, err := rdb.Get(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix")).Int()
 
 				if err == nil || err.Error() == "redis: nil" {
-					if elapsedTime > 24 && askTwitterConnectCount%10 == 0 {
-						sendTwitterConnectEmail = true
-					} else {
-						sendTwitterConnectEmail = false
+					// Using OR here to send email only to the Admin, Have to make it AND when sending to the users
+					if elapsedTime > 24 || askTwitterConnectCount == 10 {
+						// Not sending email to the already connected user now, instead it's sent to the admin
+						//sendTwitterConnectEmail(user, rdb, ctx)
+						sendAdminEmail(user, config.Get("email_twitter_error_401_subject"), errMessage)
+						rdb.Set(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix"), strconv.Itoa(0), 0)
 					}
 				} else {
 					log.Error(log.V{"Error retrieving askTwitterConnectCount from redis": err})
@@ -463,43 +463,9 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 			}
 		}
 	} else if err.Error() == "redis: nil" {
-		sendTwitterConnectEmail = true
+		sendTwitterConnectEmail(user, rdb, ctx)
 	} else {
 		log.Error(log.V{"Error retrieving twitter connect email from redis": err})
-	}
-
-	if sendTwitterConnectEmail {
-		// Mandrill implementation
-		client := m.ClientWithKey(config.Get("mandrill_key"))
-
-		message := &m.Message{}
-		message.AddRecipient(user.Email, user.Name, "to")
-		message.FromEmail = config.Get("email_digest_email")
-		message.FromName = config.Get("email_from_name")
-		message.Subject = config.Get("email_twitter_connect_subject")
-
-		// Global vars
-		message.GlobalMergeVars = m.MapToVars(map[string]interface{}{"FNAME": user.Name})
-		templateContent := map[string]string{}
-
-		response, err := client.MessagesSendTemplate(message, config.Get("mailchimp_twitter_connect_template"), templateContent)
-		if err != nil {
-			log.Error(log.V{"msg": "Twitter connect email, error sending password reset email", "error": err})
-		} else {
-			log.Info(log.V{"msg": "Twitter connect email, response from the server", "response": response})
-
-			// store the time to avoid sending the email again immediately
-			rdb.Set(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_twitter_connection_suffix"), time.Now().UTC().String(), 0)
-
-			// Change the Twitter Connected status to false
-			userParams := make(map[string]string)
-			userParams["twitter_connected"] = "False"
-
-			err = user.Update(userParams)
-			if err != nil {
-				log.Error(log.V{"Error updating twitter connected status in user": err})
-			}
-		}
 	}
 
 	// Set the number of times this function as been called
@@ -530,7 +496,7 @@ func classifyTweet(tweetText string, keywords []string) []string {
 
 		postBody, err := json.Marshal(req)
 		if err != nil {
-			log.Error(log.V{"Update stories. Error creating POST body for bert: ": err})
+			log.Error(log.V{"Update stories. Error creating POST body for bert": err})
 		}
 
 		responseBody := bytes.NewBuffer(postBody)
@@ -558,9 +524,9 @@ func classifyTweet(tweetText string, keywords []string) []string {
 		log.Info(log.V{"Bert, Tweet Text: %s": tweetText})
 
 		for i, score := range res.Scores {
-			log.Info(log.V{"Bert, Label: ": res.Labels[i], "Score: ": res.Scores[i]})
+			log.Info(log.V{"Bert, Label": res.Labels[i], "Score": res.Scores[i]})
 			if score > 0.90 {
-				log.Info(log.V{"Bert score matches threshold, Label: ": res.Labels[i], "Score: ": res.Scores[i]})
+				log.Info(log.V{"Bert score matches threshold, Label": res.Labels[i], "Score": res.Scores[i]})
 				b := bertResults{
 					Label: res.Labels[i],
 					Score: res.Scores[i],
@@ -595,7 +561,7 @@ func likeTweets(id string, tweetID string, c *gotwi.Client) error {
 	tweetLike, err := like.Create(context.Background(), c, &tweetLikeInput)
 
 	if err == nil {
-		log.Info(log.V{"Tweet: ": id, "liked successfully: ": tweetLike.Data.Liked})
+		log.Info(log.V{"Tweet": id, "liked successfully": tweetLike.Data.Liked})
 	}
 
 	return err
@@ -646,16 +612,16 @@ func getTwitterAccessToken(refreshToken string) (Token, error) {
 		if err == nil {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				log.Error(log.V{"Error: ": err})
+				log.Error(log.V{"Error": err})
 			}
 			//Convert the body to type string
 			sb := string(body)
-			log.Info(log.V{"Twitter Response: ": sb})
+			log.Info(log.V{"Twitter Response": sb})
 
 			json.Unmarshal(body, &token)
 
 			if token.Error != "" {
-				log.Error(log.V{"Twitter connect Error: ": token.Error, "Error description: ": token.ErrorDescription})
+				log.Error(log.V{"Twitter connect Error": token.Error, "Error description": token.ErrorDescription})
 				return token, err
 			}
 

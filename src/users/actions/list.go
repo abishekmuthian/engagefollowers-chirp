@@ -462,7 +462,7 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 
 			}
 		}
-	} else if err.Error() == "redis: nil" {
+	} else if err.Error() == "redis: nil" && user.TwitterAccessToken == "" {
 		sendTwitterConnectEmail(user, rdb, ctx)
 	} else {
 		log.Error(log.V{"Error retrieving twitter connect email from redis": err})

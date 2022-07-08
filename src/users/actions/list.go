@@ -462,7 +462,7 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 					}
 
 					// Using OR here to send email only to the Admin, Have to make it AND when sending to the users
-					if elapsedTime > 24 || askTwitterConnectCount == 10 {
+					if user.TwitterAccessToken != "" && (elapsedTime > 24 || askTwitterConnectCount == 10) {
 						// Not sending email to the already connected user now, instead it's sent to the admin
 						//sendTwitterConnectEmail(user, rdb, ctx)
 						sendAdminEmail(user, config.Get("email_twitter_error_401_subject"), errMessage)

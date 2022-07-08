@@ -449,11 +449,24 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 				askTwitterConnectCount, err := rdb.Get(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix")).Int()
 
 				if err == nil || err.Error() == "redis: nil" {
+					// Send Twitter connect email first 7 days
+					if elapsedTime > 24 && user.TwitterAccessToken == "" && askTwitterConnectCount < 7 {
+						sendTwitterConnectEmail(user, rdb, ctx)
+
+						// Inform admin that the user has not connected the account
+						sendAdminEmail(user, config.Get("email_twitter_error_401_subject"), errMessage)
+
+						// Increment the number of times this function as been called
+						rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix"), 1)
+						return
+					}
+
 					// Using OR here to send email only to the Admin, Have to make it AND when sending to the users
 					if elapsedTime > 24 || askTwitterConnectCount == 10 {
 						// Not sending email to the already connected user now, instead it's sent to the admin
 						//sendTwitterConnectEmail(user, rdb, ctx)
 						sendAdminEmail(user, config.Get("email_twitter_error_401_subject"), errMessage)
+						// Reset the Twitter ask connect count to 0
 						rdb.Set(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix"), strconv.Itoa(0), 0)
 					}
 				} else {
@@ -468,7 +481,7 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 		log.Error(log.V{"Error retrieving twitter connect email from redis": err})
 	}
 
-	// Set the number of times this function as been called
+	// Increment the number of times this function as been called
 	rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix"), 1)
 }
 

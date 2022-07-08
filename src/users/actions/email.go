@@ -95,7 +95,7 @@ func sendTwitterConnectEmail(user *userModel.User, rdb *redis.Client, ctx contex
 
 	response, err := client.MessagesSendTemplate(message, config.Get("mailchimp_twitter_connect_template"), templateContent)
 	if err != nil {
-		log.Error(log.V{"msg": "Twitter connect email, error sending password reset email", "error": err})
+		log.Error(log.V{"msg": "Twitter connect email, error sending Twitter connect email", "error": err})
 	} else {
 		log.Info(log.V{"msg": "Twitter connect email, response from the server", "response": response})
 
@@ -129,7 +129,7 @@ func sendAdminEmail(user *userModel.User, subject string, errorMessage string) {
 
 	response, err := client.MessagesSendTemplate(message, config.Get("mailchimp_admin_email_template"), templateContent)
 	if err != nil {
-		log.Error(log.V{"msg": "Twitter connect email to admin, error sending password reset email", "error": err})
+		log.Error(log.V{"msg": "Twitter connect email to admin, error sending Twitter connect admin email", "error": err})
 	} else {
 		log.Info(log.V{"msg": "Twitter connect email to admin, response from the server", "response": response})
 	}

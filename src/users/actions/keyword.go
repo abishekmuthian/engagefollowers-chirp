@@ -43,14 +43,20 @@ func HandleKeyword(w http.ResponseWriter, r *http.Request) error {
 	log.Info(log.V{"Auto Like": autoLikeParam})
 	log.Info(log.V{"Email": emailParam})
 
+	// Stop the attack
+	if len(keywordsParam) > 1000 {
+		return server.Redirect(w, r, "/?error=not_a_valid_topic")
+	}
+
+	keywordsParam = strings.TrimSpace(keywordsParam)
+
 	var keywords []string
 
 	if len(keywordsParam) == 0 {
 		UpdateKeywords(keywords, currentUser.ID)
 		return server.Redirect(w, r, "/?notice=topics_removed")
 	} else {
-		keywordsParam = strings.TrimSpace(keywordsParam)
-		re := regexp.MustCompile("^(\\w+ *\\w*)+( *, *\\w* *\\w*)*$")
+		re := regexp.MustCompile("^([\\w\\s,]*[^\\s,])*$")
 		if !(re.MatchString(keywordsParam)) {
 			return server.Redirect(w, r, "/?error=not_a_valid_topic")
 		}

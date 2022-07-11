@@ -54,6 +54,7 @@ func HandleHome(w http.ResponseWriter, r *http.Request) error {
 		view.AddKey("loggedIn", false)
 	} else {
 		view.AddKey("loggedIn", true)
+		view.AddKey("clientID", config.Get("client_Id"))
 		view.AddKey("redirectURI", config.Get("twitter_redirect_uri"))
 		view.AddKey("twitterScopes", config.Get("twitter_scopes"))
 

@@ -221,7 +221,31 @@
         </div>
     </section>
 {{ end }}
-
+<hr>
+<section>
+        <blockquote>
+            <img alt="Quote" src="/assets/images/app/icon-quote.svg" height="80"><br>
+            "After using engage followers, I have been able to receive tweets from the followers of my personal, business accounts and engage with them."
+            <footer><img alt="engage followers icon" src="/assets/icons/android-icon-72x72.png" height="36"><br><br><i>- Abishek Muthian, Creator of engage followers</i></footer>
+        </blockquote>
+    <figure>
+        <img alt="screenshot of a tweet classified by engage followers" src="/assets/images/app/dbarghya_das_supershot.png">
+        <figcaption><i>A health need-gap related tweet identified by engage followers</i></figcaption>
+    </figure>
+    <br/>
+    <br/>
+    <figure>
+        <img alt="screenshot of a tweet classified by engage followers" src="/assets/images/app/ruhi_supershot.png">
+        <figcaption><i>A product-market-fit related tweet identified by engage followers</i></figcaption>
+    </figure>
+    <br/>
+    <br/>
+    <figure>
+        <img alt="screenshot of a tweet classified by engage followers" src="/assets/images/app/stacktrust_supershot.png">
+        <figcaption><i>A problem-solving related tweet identified by engage followers</i></figcaption>
+    </figure>
+</section>
+<hr>
 {{/*        <section>
             <header>
                 <h3>Subscription</h3>

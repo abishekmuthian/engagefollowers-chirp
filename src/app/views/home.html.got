@@ -241,7 +241,7 @@
     <br/>
     <br/>
     <figure>
-        <img alt="screenshot of a tweet classified by engage followers" src="/assets/images/app/stacktrust_supershot.png">
+        <img alt="screenshot of a tweet classified by engage followers" src="/assets/images/app/Ioannis_supershot.png">
         <figcaption><i>A problem-solving related tweet identified by engage followers</i></figcaption>
     </figure>
 </section>
@@ -330,6 +330,10 @@
                 <li>
                     Is this allowed by Twitter?
                     <p>Absolutely, engage followers uses the official Twitter API and ensures that all guidelines are followed.</p>
+                </li>
+                <li>
+                    Is any private data from my Twitter Account accessed?
+                    <p>No private data is accessed from your Twitter account, Only publicly available data such as your followers and their tweets are accessed and the tweets which match your chosen topics are stored for sending email and deleted after the email is sent.</p>
                 </li>
                 <li>
                     Where can I follow the development of engage followers?

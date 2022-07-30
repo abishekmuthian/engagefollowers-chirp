@@ -400,6 +400,8 @@ func GetTweetsOfFollowers() {
 												}
 											}
 										}
+									} else {
+										//TODO inform user to set keywords
 									}
 
 									rdb.SAdd(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_tweet_ids_suffix"), gotwi.StringValue(tweet.ID))

@@ -241,7 +241,7 @@
     <br/>
     <br/>
     <figure>
-        <img alt="screenshot of a tweet classified by engage followers" src="/assets/images/app/Ioannis_supershot.png">
+        <img alt="screenshot of a tweet classified by engage followers" src="/assets/images/app/joe_king_supershot.png">
         <figcaption><i>A problem-solving related tweet identified by engage followers</i></figcaption>
     </figure>
 </section>
@@ -341,25 +341,6 @@
                 </li>
             </ul>
         </div>
-</section>
-
-<br/>
-<br/>
-
-<section>
-    <header>
-        <h3>Change log</h3>
-    </header>
-    <div class="change_log">
-        <ul>
-            <li>
-                4 July 2022: Improved reliability of detecting whether Twitter account connection has been lost.
-            </li>
-            <li>
-                1 July 2022: Early access release of engage followers.
-            </li>
-        </ul>
-    </div>
 </section>
 
 <br/>

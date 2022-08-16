@@ -24,14 +24,10 @@ func SetupDatabase() {
 	}
 
 	// Optionally Support remote databases
-	if len(config.Get("db_host")) > 0 {
-		options["host"] = config.Get("db_host")
-	}
-	if len(config.Get("db_port")) > 0 {
-		options["port"] = config.Get("db_port")
-	}
-	if len(config.Get("db_params")) > 0 {
-		options["params"] = config.Get("db_params")
+	if len(os.Getenv("DATABASE_URL")) > 0 {
+		options["url"] = os.Getenv("DATABASE_URL")
+	} else {
+		options["url"] = config.Get("db_url")
 	}
 
 	// Ask query to open the database

@@ -4,6 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"strings"
+	"time"
+
 	"github.com/abishekmuthian/engagefollowers/src/lib/auth"
 	"github.com/abishekmuthian/engagefollowers/src/lib/auth/can"
 	"github.com/abishekmuthian/engagefollowers/src/lib/mux"
@@ -16,12 +23,6 @@ import (
 	"github.com/michimani/gotwi/fields"
 	"github.com/michimani/gotwi/user/userlookup"
 	userType "github.com/michimani/gotwi/user/userlookup/types"
-	"io/ioutil"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"strings"
-	"time"
 )
 
 // Token stores twitter token
@@ -163,58 +164,6 @@ func HandleConnect(w http.ResponseWriter, r *http.Request) error {
 							log.Error(log.V{"Error updating twitter details in user": err})
 							return server.InternalError(err)
 						}
-
-						/*					f := &followType.ListFollowersInput{
-												ID:              gotwi.StringValue(u.Data.ID),
-												MaxResults:      1000,
-												PaginationToken: "",
-												Expansions:      nil,
-												TweetFields:     nil,
-												UserFields: fields.UserFieldList{
-													fields.UserFieldID,
-												},
-											}
-
-											followers, err := follow.ListFollowers(context.Background(), c, f)
-											if err != nil {
-												log.Println(err)
-											}
-
-											listCreateInput := types.CreateInput{
-												Name:        "EngageWithFollowers#1",
-												Description: gotwi.String("A List containing my followers"),
-												Private:     gotwi.Bool(true),
-											}
-
-											listCreateOutput, err := managelist.Create(context.Background(), c, &listCreateInput)
-
-											if err == nil {
-												listID := listCreateOutput.Data.ID
-
-												log.Printf("followers: %v, listID: %s", followers, listID)
-
-												for _, follower := range followers.Data {
-
-													listCreateInput := &listType.CreateInput{
-														ID:     listID,
-														UserID: gotwi.StringValue(follower.ID),
-													}
-
-													listMemberCreateOutput, err := listmember.Create(context.Background(), c, listCreateInput)
-
-													if err == nil {
-														log.Printf("List member added %t", listMemberCreateOutput.Data.IsMember)
-													} else {
-														log.Println("Error adding member to the list", err)
-														getDetailedError(err)
-													}
-
-												}
-											} else {
-												log.Println("Error creating list", err)
-												getDetailedError(err)
-											}*/
-
 					} else {
 						log.Error(log.V{"Error in Twitter user lookup": err})
 						getDetailedError(err)

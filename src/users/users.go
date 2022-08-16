@@ -9,10 +9,10 @@ import (
 
 // User handles saving and retrieving users from the database
 type User struct {
-	// resource.Base defines behaviour and fields shared between all resources
+	// resource.Base defines behavior and fields shared between all resources
 	resource.Base
 
-	// status.ResourceStatus defines a status field and associated behaviour
+	// status.ResourceStatus defines a status field and associated behavior
 	status.ResourceStatus
 
 	Email        string

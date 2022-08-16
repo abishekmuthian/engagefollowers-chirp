@@ -2,16 +2,18 @@ package useractions
 
 import (
 	"context"
+	"strconv"
+	"strings"
+	"time"
+
 	m "github.com/abishekmuthian/engagefollowers/src/lib/mandrill"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/config"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/log"
 	userModel "github.com/abishekmuthian/engagefollowers/src/users"
 	"github.com/go-redis/redis/v8"
-	"strconv"
-	"strings"
-	"time"
 )
 
+// EmailDailyDigest sends the daily digest of categorized tweets to the user
 func EmailDailyDigest() {
 	// Initialize redis
 	var ctx = context.Background()
@@ -79,6 +81,7 @@ func EmailDailyDigest() {
 	}
 }
 
+// sendTwitterConnectEmail sends the email asking the user to connect their Twitter account
 func sendTwitterConnectEmail(user *userModel.User, rdb *redis.Client, ctx context.Context) {
 	// Mandrill implementation
 	client := m.ClientWithKey(config.Get("mandrill_key"))
@@ -102,6 +105,9 @@ func sendTwitterConnectEmail(user *userModel.User, rdb *redis.Client, ctx contex
 		// store the time to avoid sending the email again immediately
 		rdb.Set(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_twitter_connection_suffix"), time.Now().UTC().String(), 0)
 
+		// Increment the number of times this email has been sent
+		rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix"), 1)
+
 		// Change the Twitter Connected status to false
 		userParams := make(map[string]string)
 		userParams["twitter_connected"] = "False"
@@ -113,6 +119,36 @@ func sendTwitterConnectEmail(user *userModel.User, rdb *redis.Client, ctx contex
 	}
 }
 
+// sendSetTopicsEmail sends the email to the user asking them to set the topics
+func sendSetTopicsEmail(user *userModel.User, rdb *redis.Client, ctx context.Context) {
+	// Mandrill implementation
+	client := m.ClientWithKey(config.Get("mandrill_key"))
+
+	message := &m.Message{}
+	message.AddRecipient(user.Email, user.Name, "to")
+	message.FromEmail = config.Get("email_digest_email")
+	message.FromName = config.Get("email_from_name")
+	message.Subject = config.Get("email_set_topics_subject")
+
+	// Global vars
+	message.GlobalMergeVars = m.MapToVars(map[string]interface{}{"FNAME": user.Name})
+	templateContent := map[string]string{}
+
+	response, err := client.MessagesSendTemplate(message, config.Get("mailchimp_set_topics_template"), templateContent)
+	if err != nil {
+		log.Error(log.V{"msg": "Set topics email, error sending topics email", "error": err})
+	} else {
+		log.Info(log.V{"msg": "Set topics email, response from the server", "response": response})
+
+		// store the time to avoid sending the email again immediately
+		rdb.Set(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_set_topics_suffix"), time.Now().UTC().String(), 0)
+
+		// Increment the number of times this email has been sent
+		rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_set_topics_count_suffix"), 1)
+	}
+}
+
+// sendAdminEmail sends the email to the Admin about the errors
 func sendAdminEmail(user *userModel.User, subject string, errorMessage string) {
 	// Mandrill implementation
 	client := m.ClientWithKey(config.Get("mandrill_key"))

@@ -1,13 +1,14 @@
 package useractions
 
 import (
+	"net/http"
+	"regexp"
+	"strings"
+
 	"github.com/abishekmuthian/engagefollowers/src/lib/mux"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/log"
 	"github.com/abishekmuthian/engagefollowers/src/lib/session"
-	"net/http"
-	"regexp"
-	"strings"
 )
 
 // HandleKeyword handles the POST to add keywords
@@ -81,6 +82,7 @@ func HandleKeyword(w http.ResponseWriter, r *http.Request) error {
 
 	log.Info(log.V{"Keywords": keywords})
 
+	// Store the keywords (Topics) in the user database
 	UpdateKeywords(keywords, currentUser.ID)
 
 	userParams := make(map[string]string)

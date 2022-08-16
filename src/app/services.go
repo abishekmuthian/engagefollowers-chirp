@@ -1,19 +1,20 @@
 package app
 
 import (
+	"time"
+
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/config"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/log"
 	useractions "github.com/abishekmuthian/engagefollowers/src/users/actions"
-	"time"
 )
 
 // SetupServices sets up external services from our config file
 func SetupServices() {
 
 	// Don't send if not on production server
-	if !config.Production() {
+	/* 	if !config.Production() {
 		return
-	}
+	} */
 
 	now := time.Now().UTC()
 
@@ -21,10 +22,10 @@ func SetupServices() {
 	updateInterval := 15 * time.Minute // Schedule every 30 minutes
 
 	// Starting immediately on launch for testing
-	//updateTime := now.Add(time.Second * 2)
+	updateTime := now.Add(time.Second * 2)
 
 	// Starting 15 minutes after launch
-	updateTime := now.Add(time.Minute * 15)
+	// updateTime := now.Add(time.Minute * 15)
 
 	ScheduleAt(useractions.GetTweetsOfFollowers, updateTime, updateInterval)
 
@@ -33,10 +34,16 @@ func SetupServices() {
 
 		// Email digest
 		emailInterval := 24 * time.Hour // Send email every day
+
+		// Send email after 60 seconds for testing
+		emailTime := now.Add(time.Second * 60)
+
 		// Send the email every day at 2AM UTC
-		emailTime := time.Date(now.Year(), now.Month(), now.Day(), 2, 00, 00, 00, time.UTC)
+		// emailTime := time.Date(now.Year(), now.Month(), now.Day(), 2, 00, 00, 00, time.UTC)
+
 		ScheduleAt(useractions.EmailDailyDigest, emailTime, emailInterval)
 
+		// To use when trial plan is announced
 		/*		//End Trial
 				// Email delivery
 				emailInterval = 24 * time.Hour // Send emails every 24 hours

@@ -6,6 +6,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"net/http"
+	"net/url"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/abishekmuthian/engagefollowers/src/lib/query"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/config"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/log"
@@ -27,16 +36,9 @@ import (
 	followType "github.com/michimani/gotwi/user/follow/types"
 	"github.com/michimani/gotwi/user/userlookup"
 	userType "github.com/michimani/gotwi/user/userlookup/types"
-	"io/ioutil"
-	"math/rand"
-	"net/http"
-	"net/url"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
 )
 
+// getFollowers retrieves the Twitter followers
 func getFollowers(c *gotwi.Client, user *userModel.User) {
 	var getFollowersFlag bool
 
@@ -49,6 +51,7 @@ func getFollowers(c *gotwi.Client, user *userModel.User) {
 		if err == nil {
 			for _, follower := range followers.Data {
 				followerIDs = append(followerIDs, gotwi.StringValue(follower.ID))
+				// Maximum of 15000 followers are retrieved per day (Randomized before storing later)
 				if len(followerIDs) >= 15000 {
 					getFollowersFlag = false
 				}
@@ -76,6 +79,7 @@ func getFollowers(c *gotwi.Client, user *userModel.User) {
 
 }
 
+// createList creates a list of twitter followers
 func createList(c *gotwi.Client, user *userModel.User) {
 
 	listCreateInput := manageListType.CreateInput{
@@ -124,6 +128,7 @@ func createList(c *gotwi.Client, user *userModel.User) {
 
 }
 
+// addMembersToList adds members to the list
 func addMembersToList(c *gotwi.Client, user *userModel.User) {
 
 	log.Info(log.V{"User Followers": len(user.TwitterFollowers)})
@@ -172,6 +177,7 @@ func addMembersToList(c *gotwi.Client, user *userModel.User) {
 
 }
 
+// checkIfListExists checks if there is an existing list of followers
 func checkIfListExists(listID string, c *gotwi.Client) (bool, error) {
 
 	listLookupInput := listLookupType.GetInput{
@@ -197,6 +203,7 @@ func checkIfListExists(listID string, c *gotwi.Client) (bool, error) {
 	return false, err
 }
 
+// GetTweetsOfFollowers retrieves the tweets from the followers
 func GetTweetsOfFollowers() {
 	// Initialize redis
 	var ctx = context.Background()
@@ -401,7 +408,8 @@ func GetTweetsOfFollowers() {
 											}
 										}
 									} else {
-										//TODO inform user to set keywords
+										askUserToSetTopics(rdb, ctx, user, "User has not set the topics")
+
 									}
 
 									rdb.SAdd(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_tweet_ids_suffix"), gotwi.StringValue(tweet.ID))
@@ -413,7 +421,8 @@ func GetTweetsOfFollowers() {
 					} else {
 						log.Error(log.V{"Unable to find the list for tweet lookup": err})
 						log.Info(log.V{"User Auto Like": user.AutoLike, "User Notification": user.Notification, "List exists:": listExists})
-						// TODO send user email ABOUT both auto-like and notification is disabled
+						// TODO: Send user email about both auto-like and email digest is disabled
+						// Not doing it now as email digest is a default choice
 						continue
 					}
 				} else {
@@ -437,6 +446,7 @@ func GetTweetsOfFollowers() {
 	}
 }
 
+// askUserToConnectTwitter decides whether to send the email asking the user to connect their Twitter account
 func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userModel.User, errMessage string) {
 	twitterConnectEmailTime, err := rdb.Get(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_twitter_connection_suffix")).Result()
 
@@ -447,7 +457,7 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 				currentTime := time.Now().UTC()
 				elapsedTime := currentTime.Sub(parsedTime).Hours()
 
-				// Check if twitter unauthorized error has been occurring for more than 10 times today
+				// Get how many times twitter unauthorized error has been occurring for today
 				askTwitterConnectCount, err := rdb.Get(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix")).Int()
 
 				if err == nil || err.Error() == "redis: nil" {
@@ -456,16 +466,14 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 						sendTwitterConnectEmail(user, rdb, ctx)
 
 						// Inform admin that the user has not connected the account
-						sendAdminEmail(user, config.Get("email_twitter_error_401_subject"), errMessage)
+						sendAdminEmail(user, config.Get("email_twitter_not_connected_subject"), errMessage)
 
-						// Increment the number of times this function as been called
-						rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix"), 1)
 						return
 					}
 
 					// Using OR here to send email only to the Admin, Have to make it AND when sending to the users
-					if user.TwitterAccessToken != "" && (elapsedTime > 24 || askTwitterConnectCount == 10) {
-						// Not sending email to the already connected user now, instead it's sent to the admin
+					if user.TwitterAccessToken != "" && elapsedTime > 24 && askTwitterConnectCount == 100 {
+						// Not sending email to the already connected user now, instead it's sent to the admin when there are large number of errors
 						//sendTwitterConnectEmail(user, rdb, ctx)
 						sendAdminEmail(user, config.Get("email_twitter_error_401_subject"), errMessage)
 						// Reset the Twitter ask connect count to 0
@@ -478,7 +486,10 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 			}
 		}
 	} else if err.Error() == "redis: nil" && user.TwitterAccessToken == "" {
+		// Sending email for the first time
 		sendTwitterConnectEmail(user, rdb, ctx)
+
+		sendAdminEmail(user, config.Get("email_twitter_not_connected_subject"), errMessage)
 	} else {
 		log.Error(log.V{"Error retrieving twitter connect email from redis": err})
 	}
@@ -487,6 +498,45 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 	rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix"), 1)
 }
 
+// askUserToSetTopics decides whether user should be sent an email asking them to set their Topics
+func askUserToSetTopics(rdb *redis.Client, ctx context.Context, user *userModel.User, errMessage string) {
+	setTopicsEmailTime, err := rdb.Get(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_set_topics_suffix")).Result()
+
+	if err == nil {
+		if setTopicsEmailTime != "" {
+			parsedTime, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", setTopicsEmailTime)
+			if err == nil {
+				currentTime := time.Now().UTC()
+				elapsedTime := currentTime.Sub(parsedTime).Hours()
+
+				// Get how many times the user has been asked to set keywords today today
+				askSetTopicsCount, err := rdb.Get(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_set_topics_count_suffix")).Int()
+
+				if err == nil || err.Error() == "redis: nil" {
+					// Ask user to set the keywords for first 7 days
+					if elapsedTime > 24 && len(user.Keywords) == 0 && askSetTopicsCount < 7 {
+						sendSetTopicsEmail(user, rdb, ctx)
+
+						// Inform admin that the user has not set the keywords the account
+						sendAdminEmail(user, config.Get("email_admin_set_topics_subject"), errMessage)
+					}
+				} else {
+					log.Error(log.V{"Error retrieving askSetTopicsCount from redis": err})
+				}
+
+			}
+		}
+	} else if err.Error() == "redis: nil" && len(user.Keywords) == 0 {
+		// Sending email for the first time
+		sendSetTopicsEmail(user, rdb, ctx)
+
+		sendAdminEmail(user, config.Get("email_admin_set_topics_subject"), errMessage)
+	} else {
+		log.Error(log.V{"Error retrieving twitter connect email from redis": err})
+	}
+}
+
+// classifyTweet classifies the Tweet according to the chosen topics of interest using Machine Learning
 func classifyTweet(tweetText string, keywords []string) []string {
 	type bertResults struct {
 		Label string  `json:"label"`
@@ -567,6 +617,7 @@ func classifyTweet(tweetText string, keywords []string) []string {
 	return categories
 }
 
+// likeTweets likes the tweets
 func likeTweets(id string, tweetID string, c *gotwi.Client) error {
 	tweetLikeInput := tweetLikeType.CreateInput{
 		ID:      id,
@@ -582,6 +633,7 @@ func likeTweets(id string, tweetID string, c *gotwi.Client) error {
 	return err
 }
 
+// getTwitterFollowers fetches the twitter followers, A Maximum of 1000 at time
 func getTwitterFollowers(user *userModel.User, c *gotwi.Client, paginationToken string) (*followType.ListFollowersOutput, error) {
 	followInput := followType.ListFollowersInput{
 		ID:              user.TwitterId,
@@ -603,6 +655,7 @@ func getTwitterFollowers(user *userModel.User, c *gotwi.Client, paginationToken 
 	return followers, err
 }
 
+// getTwitterAccessToken fetches the TwitterAccessToken from refresh token
 func getTwitterAccessToken(refreshToken string) (Token, error) {
 	token := Token{}
 	encodedClientCreds := base64.StdEncoding.EncodeToString([]byte(config.Get("client_Id") + ":" + config.Get("client_secret")))
@@ -654,6 +707,7 @@ func getTwitterAccessToken(refreshToken string) (Token, error) {
 	return token, err
 }
 
+// Shuffle randomizes the array of strings
 func Shuffle(vals []string) {
 	// We start at the end of the slice, inserting our random
 	// values one at a time.

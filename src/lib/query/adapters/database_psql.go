@@ -54,9 +54,10 @@ func (db *PostgresqlAdapter) Open(opts map[string]string) error {
 		db.options["params"])
 
 	var err error
-	db.sqlDB, err = sql.Open(db.options["adapter"], optionString)
-	if err != nil {
-		return err
+	if len(db.options["url"]) > 0 {
+		db.sqlDB, err = sql.Open(db.options["adapter"], db.options["url"])
+	} else {
+		db.sqlDB, err = sql.Open(db.options["adapter"], optionString)
 	}
 
 	// Call ping on the db to check it does actually exist!

@@ -3,6 +3,7 @@ package sendgrid
 import (
 	"errors"
 
+	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
 	m "github.com/abishekmuthian/engagefollowers/src/lib/mail"

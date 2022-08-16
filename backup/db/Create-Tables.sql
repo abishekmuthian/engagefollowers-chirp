@@ -86,11 +86,12 @@ ALTER TABLE users OWNER TO postgres;
 grant
 all
 on schema public to public;
-GRANT INSERT,
+-- For user other than postgres: 
+/* GRANT INSERT,
 UPDATE,
 SELECT
 ON ALL TABLES IN SCHEMA public TO engagefollowers;
 GRANT
 USAGE,
 SELECT
-ON ALL SEQUENCES IN SCHEMA public TO engagefollowers;
+ON ALL SEQUENCES IN SCHEMA public TO engagefollowers; */

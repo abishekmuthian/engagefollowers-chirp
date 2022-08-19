@@ -23,7 +23,7 @@ Clicking the above image would open the demo video in YouTube.
 ### Technical How
 1. A 100 randomized Twitter followers are stored in a Twitter list (The list is rotated every 24 hours). 
 2. Tweets from the members of the list are retrieved every 15 minutes.
-3. New tweets are classified using a BERT model using our set **topics of interest** as labels.
+3. New tweets are classified using a BART model using our set **topics of interest** as labels.
 4. Tweets which matches our interests are stored to be sent via email digest and/or liked.
 5. An email digest containing the tweets from the followers, Classified according to our interests are sent.
    
@@ -36,9 +36,11 @@ Clicking the above image would open the demo video in YouTube.
 4. Redis server version 7.0.4 (or) higher.
 
 ### Database
-Create a PostgreSQL database (e.g. **engagefollowers_development**) and create tables as per the .sql file located in `/backup/db/Create-Tables.sql`.
+1. Create a PostgreSQL database (e.g. **engagefollowers_development**) and create tables as per the .sql file located in `/backup/db/Create-Tables.sql`.
 
 Note: If a new role(user) is created for testing other than default `postgres` user, The user needs to be provided proper permissions to the database and tables(Currently commented in the .sql file).
+
+2. Make the redis server [persist data](https://redis.io/docs/manual/persistence/) by enabling `Append-only file`(AOF).
 
 ### Machine Learning Server
 Install the required Python packages from `requirements.txt`.

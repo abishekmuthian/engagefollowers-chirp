@@ -99,6 +99,10 @@ Note: `db`, `db_pass`, `db_user`, `db_port`, can also be optionally used instead
 7. `redis_server`: `[Redis server IP]:6379`.
 8. `twitter_redirect_uri`: `[https project domain]/users/connect`.
 
+### Project Structure
+1. `server.go` is the entry point.
+2. `/src/users/actions` contains the business logic.
+
 ### Scheduling the services
 
 `/src/app/services.go` file consists of timings for scheduling the Tweet retrieval and  Email Digest service.

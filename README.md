@@ -12,7 +12,7 @@ Knowing the common interests with our followers can help build meaningful relati
 ### How
 Here's where **engage followers** does its magic! All we need to do is connect our Twitter account and set our favorite topics.
 
-Tweets from our followers are classified using Machine Learning (So it's not just based on keywords) and We can choose to either automatically like the tweet which matches our topics(To find them in the Likes section) (or) Receive an email digest at the end of the day.
+Tweets from our followers are classified using Machine Learning (So it's not just based on keywords). We can choose to receive an email digest at the end of the day containing those tweets which matches our topics (and/or) automatically like the tweet to find them in the Likes section sooner.
 
 We can then choose to engage with those tweets from our followers to build meaningful relationships with them.
 
@@ -22,7 +22,7 @@ Clicking the above image would open the demo video in YouTube.
 
 ### Technical How
 1. A 100 randomized Twitter followers are stored in a Twitter list (The list is rotated every 24 hours). 
-2. Tweets from the members of the list are retrieved every 15 minutes.
+2. Tweets from the members of the list are retrieved at regular intervals.
 3. New tweets are classified using a BART model using our set **topics of interest** as labels.
 4. Tweets which matches our interests are stored to be sent via email digest and/or liked.
 5. An email digest containing the tweets from the followers, Classified according to our interests are sent.
@@ -43,6 +43,10 @@ Note: If a new role(user) is created for testing other than default `postgres` u
 2. Make the redis server [persist data](https://redis.io/docs/manual/persistence/) by enabling `Append-only file`(AOF).
 
 ### Machine Learning Server
+Install `uvicorn`:
+        
+        $ pip3 install "uvicorn[standard]"
+
 Install the required Python packages from `requirements.txt`.
 
 1. Create a folder `models` in the same directory where `engagefollowers` project folder is located.
@@ -61,7 +65,7 @@ Install the required Python packages from `requirements.txt`.
         $ uvicorn main:app --host 0.0.0.0 --port 8000
 
 Note: 
-1. In production, I use gunicorn with multiple workers for greater performance as found in `/backup/server_scripts/gunicorn.service`. 
+1. In production, I use gunicorn with multiple workers for greater performance as found in `/backup/server_scripts/gunicorn.service`. For using [gunicorn](https://gunicorn.org/), It needs to be installed along with uvicorn as detailed earlier.
 
 2. GPU can be used in the Machine Learning service if `device=0` used while initializing model in the `main.py`.
 
@@ -128,15 +132,14 @@ After ensuring that Postgres, Redis and Machine Learning server is running,
 2. Register a user account (With a valid email address).
 3. Connect your twitter account (With couple of followers with recent tweets) and Authorize the app.
 4. Set the topics for classification.
-5. **Email Digest** is required (selected by default) for receiving the classified tweets by email and/or **Auto Like** for automatically liking those tweets to later find them in the Likes section of your Twitter profile.
+5. **Email Digest** is required (selected by default) for receiving the classified tweets by email and/or **Auto Like** for automatically liking those tweets to find them in the Likes section of your Twitter profile sooner.
 
 ### Miscellaneous Testing Notes
 1. Tweet ids are stored in redis after processing to avoid redundant processing, So for testing if there are no new tweets from the followers, the application needs to be run when there are new tweets(Or should tweet from a follower account before each test).
-2. Twitter rate limits are handled internally (e.g. Follower lists are created only every 24 hours), Although **rate limits and other Twitter warnings/errors would be printed in the log**, It doesn't affect the state of the application.
+2. Twitter rate limits are handled internally (e.g. Follower lists are created only every 24 hours), Although **rate limits and other Twitter warnings/errors would be printed in the log, It doesn't affect the state of the application**.
 
 ### Copyright and Licenses
-
-© 2022 Abishek Muthian
+© 2022 Abishek Muthian https://engagefollowers.com.
 
 Private repository submitted as an entrant for [chirp dev challenge 2022](https://chirpdevchallenge.devpost.com/).
 

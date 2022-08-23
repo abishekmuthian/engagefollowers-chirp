@@ -469,10 +469,14 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 						sendAdminEmail(user, config.Get("email_twitter_not_connected_subject"), errMessage)
 
 						return
+					} else if askTwitterConnectCount > 7 {
+						// Increment the number of times this function as been called
+						rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix"), 1)
 					}
 
-					// Using OR here to send email only to the Admin, Have to make it AND when sending to the users
-					if user.TwitterAccessToken != "" && elapsedTime > 24 && askTwitterConnectCount == 100 {
+					// Informing when there are high number of errors(Possible Twitter disconnection)
+					// Using OR here to send email only to the Admin, Have to make it AND and include elapsedTime when sending to the users
+					if user.TwitterAccessToken != "" && askTwitterConnectCount == 100 {
 						// Not sending email to the already connected user now, instead it's sent to the admin when there are large number of errors
 						//sendTwitterConnectEmail(user, rdb, ctx)
 						sendAdminEmail(user, config.Get("email_twitter_error_401_subject"), errMessage)
@@ -493,9 +497,6 @@ func askUserToConnectTwitter(rdb *redis.Client, ctx context.Context, user *userM
 	} else {
 		log.Error(log.V{"Error retrieving twitter connect email from redis": err})
 	}
-
-	// Increment the number of times this function as been called
-	rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_ask_twitter_connection_count_suffix"), 1)
 }
 
 // askUserToSetTopics decides whether user should be sent an email asking them to set their Topics

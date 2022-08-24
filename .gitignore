@@ -15,3 +15,4 @@ public/assets/styles/app-*
 engagefollowers
 .idea/*
 .vscode/*
+.patch

@@ -120,7 +120,7 @@ Note: `db`, `db_pass`, `db_user`, `db_port`, can also be optionally used instead
 After ensuring Go is installed in the system,
         
         $ cd engagefollowers
-        $ go build engagefollowers
+        $ go build
 
 ### Run the application
 After ensuring that Postgres, Redis and Machine Learning server is running,
@@ -159,8 +159,3 @@ stripe-go: https://github.com/stripe/stripe-go licensed under [The MIT License](
 fastapi: https://github.com/tiangolo/fastapi licensed under [The MIT License](https://github.com/tiangolo/fastapi/blob/master/LICENSE).
 
 transformers: https://github.com/huggingface/transformers licensed under [Apache License 2.0](https://github.com/huggingface/transformers/blob/main/LICENSE).
-
-
-
-
-

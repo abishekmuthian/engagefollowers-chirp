@@ -49,7 +49,7 @@ Install `uvicorn`:
 
 Install the required Python packages from `requirements.txt`.
 
-1. Create a folder `models` in the same directory where `engagefollowers` project folder is located.
+1. Create a folder `models` in the same directory where `engagefollowers-chirp` project folder is located.
 
         $ mkdir models
    
@@ -61,7 +61,7 @@ Install the required Python packages from `requirements.txt`.
 
 3. Run the service in the engagefollowers folder, 
 
-        $ cd engagefollowers
+        $ cd engagefollowers-chirp
         $ uvicorn main:app --host 0.0.0.0 --port 8000
 
 Note: 
@@ -119,7 +119,7 @@ Note: `db`, `db_pass`, `db_user`, `db_port`, can also be optionally used instead
 ### Building the application
 After ensuring Go is installed in the system,
         
-        $ cd engagefollowers
+        $ cd engagefollowers-chirp
         $ go build
 
 ### Run the application
@@ -128,7 +128,7 @@ After ensuring that Postgres, Redis and Machine Learning server is running,
     $ ./engagefollowers
 
 ### Usage
-1. Visit the engage followers project domain you have set in `root_url`.
+1. Visit the engage followers project domain you have set in `root_url` with set `port` e.g. `localhost.com:3000`.
 2. Register a user account (With a valid email address).
 3. Connect your twitter account (With couple of followers with recent tweets) and Authorize the app.
 4. Set the topics for classification.

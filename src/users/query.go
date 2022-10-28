@@ -62,6 +62,10 @@ func NewWithColumns(cols map[string]interface{}) *User {
 	user.TwitterFollowers = resource.ValidateStringArray(cols["twitter_followers"])
 	user.TwitterListCreationTime = resource.ValidateTime(cols["twitter_list_creation_time"])
 
+	user.TwitterOauthToken = resource.ValidateString(cols["twitter_oauth_token"])
+	user.TwitterOauthTokenSecret = resource.ValidateString(cols["twitter_oauth_token_secret"])
+	user.TwitterOauthConnected = resource.ValidateBoolean(cols["twitter_oauth_connected"])
+
 	user.AutoLike = resource.ValidateBoolean(cols["auto_like"])
 
 	return user

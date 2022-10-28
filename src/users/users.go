@@ -43,5 +43,9 @@ type User struct {
 	TwitterFollowers        []string
 	TwitterListCreationTime time.Time
 
+	TwitterOauthToken       string
+	TwitterOauthTokenSecret string
+	TwitterOauthConnected   bool
+
 	AutoLike bool
 }

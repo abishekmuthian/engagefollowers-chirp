@@ -265,7 +265,8 @@ func (p *RequestParams) GetStrings(key string) []string {
 }
 
 // GetDate returns the first value associated with a given key as a time,
-//  using the given time format.
+//
+//	using the given time format.
 func (p *RequestParams) GetDate(key string, format string) (time.Time, error) {
 	v := p.Get(key)
 	return time.Parse(format, v)

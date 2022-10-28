@@ -221,6 +221,34 @@
         </div>
     </section>
 {{ end }}
+
+
+{{ if .loggedIn  }}
+    <section id="connect-oauth1">
+        <header>
+            <h1>Dynamic Banner</h1>
+            <p>Set dynamic banner for your Twitter profile with the word cloud of your tweets.</p>
+        </header>
+        <div class="twitter_login">
+            {{ if .error }}
+                <section class="notice">
+                    {{ if eq .error "failed_twitter_connect"}}
+                        <p class="error">Unable to connect to the Twitter account. Please contact support</p>
+                        <br/>
+                    {{ end }}
+                </section>
+            {{ end }}
+            <section>
+                <p>
+                    <a href="https://api.twitter.com/oauth/authorize?oauth_token={{ .oauthToken }}"><i>Login
+                            to Twitter &nearr;</i></a>
+                </p>
+            </section>
+        </div>
+    </section>
+{{ end }}
+
+
 <hr>
 <section>
         <blockquote>

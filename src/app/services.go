@@ -22,10 +22,10 @@ func SetupServices() {
 	updateInterval := 15 * time.Minute // Schedule every 15 minutes
 
 	// Starting immediately on launch for testing
-	// updateTime := now.Add(time.Second * 2)
+	updateTime := now.Add(time.Second * 2)
 
 	// Starting 15 minutes after launch
-	updateTime := now.Add(time.Minute * 15)
+	// updateTime := now.Add(time.Minute * 15)
 
 	ScheduleAt(useractions.GetTweetsOfFollowers, updateTime, updateInterval)
 

@@ -134,12 +134,18 @@ func addMembersToList(c *gotwi.Client, user *userModel.User) {
 	log.Info(log.V{"User Followers": len(user.TwitterFollowers)})
 
 	var limitedFollowers []string
+
 	if len(user.TwitterFollowers) > 100 {
 		// Limiting the followers to 100 due to rate limit
 		Shuffle(user.TwitterFollowers)
 		limitedFollowers = user.TwitterFollowers[:100]
 	} else {
 		limitedFollowers = user.TwitterFollowers
+	}
+
+	// If the user needs profile banner
+	if user.TwitterOauthConnected {
+		limitedFollowers = append([]string{user.TwitterId}, limitedFollowers...)
 	}
 
 	if len(limitedFollowers) > 0 {

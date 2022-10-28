@@ -1,6 +1,8 @@
-package productctions
+package appactions
 
 import (
+	"net/http"
+
 	"github.com/abishekmuthian/engagefollowers/src/lib/auth"
 	"github.com/abishekmuthian/engagefollowers/src/lib/mux"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server"
@@ -8,7 +10,7 @@ import (
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/log"
 	"github.com/abishekmuthian/engagefollowers/src/lib/session"
 	"github.com/abishekmuthian/engagefollowers/src/lib/view"
-	"net/http"
+	useractions "github.com/abishekmuthian/engagefollowers/src/users/actions"
 
 	"github.com/abishekmuthian/engagefollowers/src/lib/stats"
 )
@@ -63,6 +65,20 @@ func HandleHome(w http.ResponseWriter, r *http.Request) error {
 		if err == nil {
 			view.AddKey("code", nonceToken)
 		}
+
+		// Oauth1.0a flow for banner image update
+		// TODO: Implement only If the user hasn't already authenticated oauth1.0
+
+		if !currentUser.TwitterOauthConnected {
+			oauthToken, err := useractions.GenerateRequestToken(w, r)
+
+			if err != nil {
+				// Don't show Twitter dynamic banner flow
+			} else {
+				view.AddKey("oauthToken", oauthToken.OauthToken)
+			}
+		}
+
 	}
 
 	//view.AddKey("validationDeadline", math.Round(time.Date(2021, time.June, 30, 0, 0, 0, 0, time.UTC).Sub(time.Now()).Hours()/24))
@@ -101,6 +117,33 @@ func HandleHome(w http.ResponseWriter, r *http.Request) error {
 			view.AddKey("price", config.Get("stripe_price_US"))
 		}
 	}
+
+	// Test profile banner update
+
+	// Read the entire file into a byte slice
+	// bytes, err := ioutil.ReadFile("./public/assets/images/app/wordcloud.png")
+	// if err != nil {
+	// 	log.Error(log.V{"Update profile banner": err})
+	// }
+
+	// var base64Encoding string
+	// /*
+	// 			// Prepend the appropriate URI scheme header depending
+	// 			// on the MIME type
+	// 	        // Mime type results in media error on Twitter
+	// 			// Determine the content type of the image file
+	// 			    mimeType := http.DetectContentType(bytes)
+	// 			    switch mimeType {
+	// 			   	case "image/jpeg":
+	// 			   		base64Encoding += "data:image/jpeg;base64,"
+	// 			   	case "image/png":
+	// 			   		base64Encoding += "data:image/png;base64,"
+	// 			   	} */
+
+	// // Append the base64 encoded output
+	// base64Encoding = base64.StdEncoding.EncodeToString(bytes)
+
+	// useractions.UpdateProfileBanner(currentUser, base64Encoding)
 
 	return view.Render()
 }

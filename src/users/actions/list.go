@@ -346,7 +346,7 @@ func GetTweetsOfFollowers() {
 
 					listExists, err := checkIfListExists(user.TwitterListID, c)
 
-					if err == nil && listExists && user.Notification { // Not checking if the user has AutoLike enabled as the feature has been disabled
+					if err == nil && listExists && (user.Notification || user.ProfileBanner) { // Not checking if the user has AutoLike enabled as the feature has been disabled
 						listTweetLookupInput := listTweetLookupInput.ListInput{
 							ID:              user.TwitterListID,
 							MaxResults:      15,
@@ -407,7 +407,7 @@ func GetTweetsOfFollowers() {
 											if gotwi.StringValue(tweet.AuthorID) == user.TwitterId {
 												log.Info(log.V{"List, Tweet is from the user": user.TwitterUsername})
 												for _, category := range categories {
-													rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+":"+category+config.Get("redis_key_profile_banner_label_suffix"), 1)
+													rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+":"+SpaceMap(category)+config.Get("redis_key_profile_banner_label_suffix"), 1)
 												}
 											}
 

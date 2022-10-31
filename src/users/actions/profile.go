@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"unicode"
 
 	_ "embed"
 
@@ -122,7 +123,7 @@ func GenerateProfileBanner() {
 
 			if user.ProfileBanner && user.TwitterOauthConnected {
 				for _, category := range user.Keywords {
-					score, err := rdb.Get(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+":"+category+config.Get("redis_key_profile_banner_label_suffix")).Int()
+					score, err := rdb.Get(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+":"+SpaceMap(category)+config.Get("redis_key_profile_banner_label_suffix")).Int()
 
 					if err != nil {
 						log.Error(log.V{"Profile, Error retrieving data from redis": err})
@@ -287,4 +288,14 @@ func addName(img *image.RGBA, x, y int, name string, conf Conf) {
 	}
 	d.DrawString(name)
 
+}
+
+// SpaceMap removes the whitespace from the string
+func SpaceMap(str string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			return -1
+		}
+		return r
+	}, str)
 }

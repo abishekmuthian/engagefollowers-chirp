@@ -19,12 +19,12 @@ func SetupServices() {
 	now := time.Now().UTC()
 
 	// Update Tweets
-	updateInterval := 60 * time.Minute // Schedule every 15 minutes
+	updateInterval := 60 * time.Minute // Schedule every 60 minutes
 
 	// Starting immediately on launch for testing
 	// updateTime := now.Add(time.Second * 2)
 
-	// Starting 15 minutes after launch
+	// Starting 45 minutes after launch
 	updateTime := now.Add(time.Minute * 45)
 
 	ScheduleAt(useractions.GetTweetsOfFollowers, updateTime, updateInterval)
@@ -37,6 +37,7 @@ func SetupServices() {
 	// Start immediately for testing
 	// profileUpdateTime := now.Add(time.Minute * 2)
 
+	// Starting 15 minutes after launch
 	profileUpdateTime := now.Add(time.Minute * 15) // Update profile banner every hour
 
 	ScheduleAt(useractions.GenerateProfileBanner, profileUpdateTime, profileUpdateInterval)

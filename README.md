@@ -80,7 +80,7 @@ Note:
 1. Get access to developer portal at Twitter - [https://developer.twitter.com/](https://developer.twitter.com/).
 2. Create a new project `engagefollowers-test` and a new app `engagefollowers-test`.
 3. Type of App: `Web App`.
-4. Get the `Client ID`, `Client Secret`.
+4. Get the `Client ID`, `Client Secret`, `API Key and Secret`, `Access Token and Secret`.
 5. Setup OAuth 2.0,
    
    a. Callback URI / Redirect URL:  `[https project domain]/users/connect`.
@@ -108,9 +108,11 @@ Note: `db`, `db_pass`, `db_user`, `db_port`, can also be optionally used instead
 3. `root_url`: **[https project domain]** mentioned earlier in the Twitter developer portal setup.
 4. `client_Id`: **Client ID** mentioned earlier in the Twitter developer portal setup.
 5. `client_secret`: **Client Secret** mentioned earlier in the Twitter developer portal setup.
-6. `classifier_server`: **Machine Learning Server** created earlier, `[Machine Learning Server IP]:8000/classification`.
-7. `redis_server`: `[Redis server IP]:6379`.
-8. `twitter_redirect_uri`: `[https project domain]/users/connect`.
+6. `twitter_api_key`, `twitter_api_key_secret`: **API Key and Secret** mentioned earlier in the Twitter developer portal setup.
+7. `twitter_access_token`, `twitter_access_token_secret`: **Access Token and Secret** mentioned earlier in the Twitter developer portal setup. 
+8. `classifier_server`: **Machine Learning Server** created earlier, `[Machine Learning Server IP]:8000/classification`.
+9. `redis_server`: `[Redis server IP]:6379`.
+10. `twitter_redirect_uri`: `[https project domain]/users/connect`.
 
 ### Project Structure
 1. `server.go` is the entry point.

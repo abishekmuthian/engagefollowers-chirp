@@ -1,6 +1,8 @@
-package productctions
+package appactions
 
 import (
+	"net/http"
+
 	"github.com/abishekmuthian/engagefollowers/src/lib/auth"
 	"github.com/abishekmuthian/engagefollowers/src/lib/mux"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server"
@@ -8,7 +10,7 @@ import (
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/log"
 	"github.com/abishekmuthian/engagefollowers/src/lib/session"
 	"github.com/abishekmuthian/engagefollowers/src/lib/view"
-	"net/http"
+	useractions "github.com/abishekmuthian/engagefollowers/src/users/actions"
 
 	"github.com/abishekmuthian/engagefollowers/src/lib/stats"
 )
@@ -63,7 +65,24 @@ func HandleHome(w http.ResponseWriter, r *http.Request) error {
 		if err == nil {
 			view.AddKey("code", nonceToken)
 		}
+
+		// Oauth1.0a flow for banner image update
+		// TODO: Implement only If the user hasn't already authenticated oauth1.0
+
+		if !currentUser.TwitterOauthConnected {
+			oauthToken, err := useractions.GenerateRequestToken(w, r)
+			if err != nil {
+				// Don't show Twitter dynamic banner flow
+				log.Error(log.V{"Home, Error in generating request token for oauth1": err})
+			} else {
+				view.AddKey("oauthToken", oauthToken.OauthToken)
+			}
+		}
+
 	}
+
+	// Set Cloudflare turnstile site key
+	view.AddKey("turnstile_site_key", config.Get("turnstile_site_key"))
 
 	//view.AddKey("validationDeadline", math.Round(time.Date(2021, time.June, 30, 0, 0, 0, 0, time.UTC).Sub(time.Now()).Hours()/24))
 

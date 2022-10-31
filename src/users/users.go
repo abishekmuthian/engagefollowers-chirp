@@ -36,12 +36,19 @@ type User struct {
 	TwitterConnected        bool
 	TwitterId               string
 	TwitterUsername         string
+	TwitterName             string
 	TwitterAccessToken      string
 	TwitterRefreshToken     string
 	TwitterTokenExpiryTime  time.Time
 	TwitterListID           string
 	TwitterFollowers        []string
 	TwitterListCreationTime time.Time
+	TwitterOauthToken       string
+	TwitterOauthTokenSecret string
+	TwitterOauthConnected   bool
 
+	// AutoLike feature has been disabled to prevent ToS violation
 	AutoLike bool
+
+	ProfileBanner bool
 }

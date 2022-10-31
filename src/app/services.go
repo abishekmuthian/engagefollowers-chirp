@@ -12,23 +12,34 @@ import (
 func SetupServices() {
 
 	// Don't send if not on production server
-	// Currently disabled for testing
-	/* 	if !config.Production() {
+	if !config.Production() {
 		return
-	} */
+	}
 
 	now := time.Now().UTC()
 
 	// Update Tweets
-	updateInterval := 15 * time.Minute // Schedule every 15 minutes
+	updateInterval := 60 * time.Minute // Schedule every 15 minutes
 
 	// Starting immediately on launch for testing
-	updateTime := now.Add(time.Second * 2)
+	// updateTime := now.Add(time.Second * 2)
 
 	// Starting 15 minutes after launch
-	// updateTime := now.Add(time.Minute * 15)
+	updateTime := now.Add(time.Minute * 45)
 
 	ScheduleAt(useractions.GetTweetsOfFollowers, updateTime, updateInterval)
+
+	// Setup profile update
+
+	// Update Profile Banner
+	profileUpdateInterval := 60 * time.Minute // Schedule every 60 minutes
+
+	// Start immediately for testing
+	// profileUpdateTime := now.Add(time.Minute * 2)
+
+	profileUpdateTime := now.Add(time.Minute * 15) // Update profile banner every hour
+
+	ScheduleAt(useractions.GenerateProfileBanner, profileUpdateTime, profileUpdateInterval)
 
 	// Set up mail
 	if config.Get("mandrill_key") != "" {
@@ -37,10 +48,10 @@ func SetupServices() {
 		emailInterval := 24 * time.Hour // Send email every day
 
 		// Send email after 60 seconds for testing
-		emailTime := now.Add(time.Second * 60)
+		// emailTime := now.Add(time.Second * 60)
 
 		// Send the email every day at 2AM UTC
-		// emailTime := time.Date(now.Year(), now.Month(), now.Day(), 2, 00, 00, 00, time.UTC)
+		emailTime := time.Date(now.Year(), now.Month(), now.Day(), 2, 00, 00, 00, time.UTC)
 
 		ScheduleAt(useractions.EmailDailyDigest, emailTime, emailInterval)
 

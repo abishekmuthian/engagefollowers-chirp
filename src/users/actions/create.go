@@ -1,7 +1,14 @@
 package useractions
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strings"
+
 	"github.com/abishekmuthian/engagefollowers/src/lib/auth"
 	"github.com/abishekmuthian/engagefollowers/src/lib/auth/can"
 	"github.com/abishekmuthian/engagefollowers/src/lib/mailchimp"
@@ -12,8 +19,6 @@ import (
 	"github.com/abishekmuthian/engagefollowers/src/lib/session"
 	"github.com/abishekmuthian/engagefollowers/src/lib/status"
 	"github.com/abishekmuthian/engagefollowers/src/users"
-	"net/http"
-	"regexp"
 )
 
 // HandleCreate handles the POST of the create form for users
@@ -41,6 +46,69 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) error {
 	params, err := mux.Params(r)
 	if err != nil {
 		return server.InternalError(err)
+	}
+
+	// Using turnstile to verify users
+	if len(params.Get("cf-turnstile-response")) > 0 {
+		if string(params.Get("cf-turnstile-response")) != "" {
+
+			type turnstileResponse struct {
+				Success      bool     `json:"success"`
+				Challenge_ts string   `json:"challenge_ts"`
+				Hostname     string   `json:"hostname"`
+				ErrorCodes   []string `json:"error-codes"`
+				Action       string   `json:"login"`
+				Cdata        string   `json:"cdata"`
+			}
+
+			var remoteIP string
+			var siteVerify turnstileResponse
+
+			if config.Production() {
+				// Get the IP from Cloudflare
+				remoteIP = r.Header.Get("CF-Connecting-IP")
+
+			} else {
+				// Extract the IP from the address
+				remoteIP = r.RemoteAddr
+				forward := r.Header.Get("X-Forwarded-For")
+				if len(forward) > 0 {
+					remoteIP = forward
+				}
+			}
+
+			postBody := url.Values{}
+			postBody.Set("secret", config.Get("turnstile_secret_key"))
+			postBody.Set("response", string(params.Get("cf-turnstile-response")))
+			postBody.Set("remoteip", remoteIP)
+
+			resp, err := http.Post("https://challenges.cloudflare.com/turnstile/v0/siteverify", "application/x-www-form-urlencoded", strings.NewReader(postBody.Encode()))
+			if err != nil {
+				log.Info(log.V{"Upload, An error occurred while sending the request to the siteverify": err})
+				return server.InternalError(err)
+			}
+			defer resp.Body.Close()
+
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				log.Error(log.V{"Upload, An error occurred while reading the response from the siteverify": err})
+				return server.InternalError(err)
+			}
+
+			json.Unmarshal(body, &siteVerify)
+
+			if !siteVerify.Success {
+				// Security challenge failed
+				log.Error(log.V{"Upload, Security challenge failed": siteVerify.ErrorCodes[0]})
+				return server.Redirect(w, r, "/?error=security_challenge_failed_register#register")
+			}
+		} else {
+			log.Error(log.V{"Upload, Security challenge unable to process": "response not received from user"})
+			return server.Redirect(w, r, "/?error=security_challenge_not_completed_register#register")
+		}
+	} else {
+		// Security challenge not completed
+		return server.Redirect(w, r, "/?error=security_challenge_not_completed_register#register")
 	}
 
 	// Check a user doesn't exist with this name or email already

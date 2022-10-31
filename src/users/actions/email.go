@@ -119,6 +119,29 @@ func sendTwitterConnectEmail(user *userModel.User, rdb *redis.Client, ctx contex
 	}
 }
 
+// sendProfileBannerEmail sends the email informing the user about profile banner change
+func sendProfileBannerEmail(user *userModel.User, rdb *redis.Client, ctx context.Context) {
+	// Mandrill implementation
+	client := m.ClientWithKey(config.Get("mandrill_key"))
+
+	message := &m.Message{}
+	message.AddRecipient(user.Email, user.Name, "to")
+	message.FromEmail = config.Get("email_digest_email")
+	message.FromName = config.Get("email_from_name")
+	message.Subject = config.Get("email_profile_banner_set_subject")
+
+	// Global vars
+	message.GlobalMergeVars = m.MapToVars(map[string]interface{}{"FNAME": user.Name, "TWITTER_PROFILE": "https://twitter.com/" + user.TwitterUsername})
+	templateContent := map[string]string{}
+
+	response, err := client.MessagesSendTemplate(message, config.Get("mailchimp_profile_banner_template"), templateContent)
+	if err != nil {
+		log.Error(log.V{"msg": "Profile banner email, error sending Twitter connect email", "error": err})
+	} else {
+		log.Info(log.V{"msg": "Profile banner email, response from the server", "response": response})
+	}
+}
+
 // sendSetTopicsEmail sends the email to the user asking them to set the topics
 func sendSetTopicsEmail(user *userModel.User, rdb *redis.Client, ctx context.Context) {
 	// Mandrill implementation

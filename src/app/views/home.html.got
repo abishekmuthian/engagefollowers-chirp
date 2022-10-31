@@ -16,8 +16,8 @@
     </aside>
     <aside>
         <img alt="Heart image to signify liking the tweet" src="/assets/images/app/heart-red.png" height="150">
-        <h3>Choose your engagement</h3>
-        <p>Either let engage followers like the tweets which matches your chosen topics automatically or receive email digest of the tweets.</p>
+        <h3>Engage with your Followers</h3>
+        <p>Receive an email digest of the tweets from your followers matching your interests by the end of the day.<br/>Set real-time tweet word cloud profile banner to show your interests to your potential followers.</p>
     </aside>
 </section>
 <hr>
@@ -27,7 +27,9 @@
             <details {{ if .error }}{{ if eq .error "not_a_valid_email_register"}}open=""
                      {{ else if eq .error "not_a_valid_name_register"}}open=""
                      {{ else if eq .error "not_a_valid_password_register"}}open=""
-                     {{ else if eq .error "duplicate_email_register"}}open=""{{end}}{{end}}>
+                     {{ else if eq .error "duplicate_email_register"}}open=""
+                     {{ else if eq .error "security_challenge_not_completed_register"}}open="" 
+                     {{ else if eq .error "security_challenge_failed_register"}}open=""{{end}}{{end}}>
                 <summary>Don't have an account? You can register here.</summary>
                 {{ if .error }}
                     <section class="notice">
@@ -44,14 +46,21 @@
                     </section>
                 {{ end }}
                 <section>
-                    <form method="post" class="resource-update-form" action="/users/create">
+                    <form id="register-form" method="post" class="resource-update-form" action="/users/create">
                         {{ field "Name" "name" "" "autofocus" }}
                         {{ field "Email" "email" "" "autofocus" }}
                         {{ field "Password" "password" "" "password" "type=password" }}
+                        <div class="cf-turnstile" data-sitekey="{{ .turnstile_site_key }}"></div> 
                         <div class="field actions">
                             <button type="submit" class="button " value="Register">Register</button>
                         </div>
-
+                        {{ if .error }}
+                        {{ if eq .error "security_challenge_not_completed_register"}}
+                        <p class="error">Please verify that you are a human.<br>If you don't see the verification widget,<br>Please refresh page.</p>
+                        {{ else if eq .error "security_challenge_failed_register"}}
+                        <p class="error">Security challenge failed,<br>Try again later if you are not a bot!</p>
+                        {{ end }}
+                        {{ end }}
                         <input name="redirectURL" type="hidden" value="{{.redirectURL}}">
                     </form>
                 </section>
@@ -72,22 +81,30 @@
                 </section>
             {{ end }}
             <section>
-                <form action="/users/login" method="post">
+                <form id="login-form" action="/users/login" method="post">
                     {{ field "Email" "email" "" "email" "autofocus"}}
                     {{ field "Password" "password" "" "password" "type=password"}}
+                    <div class="cf-turnstile" data-sitekey="{{ .turnstile_site_key }}"></div> 
                     <div class="actions">
                         <button type="submit" class="button" value="Login">Login</button>
                     </div>
-
+                    {{ if .error }}
+                    {{ if eq .error "security_challenge_not_completed_login"}}
+                    <p class="error">Please verify that you are a human.<br>If you don't see the verification widget,<br>Please refresh page.</p>
+                    {{ else if eq .error "security_challenge_failed_login"}}
+                    <p class="error">Security challenge failed,<br>Try again later if you are not a bot!</p>
+                    {{ end }}
+                    {{ end }}
                     <input name="redirectURL" type="hidden" value="{{.redirectURL}}">
                 </form>
             </section>
         </div>
     </section>
-    <section id="forgot_password">
+    <section id="forgot-password">
         <div>
             <details
-                    {{ if or .error .notice }}{{ if or (eq .error "not_a_valid_account") (eq .notice "password_reset_sent" )}}open=""{{end}}{{end}}>
+                    {{ if or .error .notice }}{{ if or (eq .error "not_a_valid_account") (eq .notice "password_reset_sent" )}}open=""
+                    {{ else if or (eq .error "security_challenge_not_completed_forgot_password") (eq .notice "security_challenge_failed_forgot_password" )}}open="" {{end}}{{end}}>
                 <summary>Forgot password? You can reset it here.</summary>
                 {{ if .notice }}
                     <section class="notice">
@@ -104,9 +121,16 @@
                     </section>
                 {{ end }}
                 <section>
-                    <form action="/users/password/reset" method="post">
+                    <form id="forgot-password-form" action="/users/password/reset" method="post">
                         {{ field "Email" "email" "" "autofocus" }}
-
+                        <div class="cf-turnstile" data-sitekey="{{ .turnstile_site_key }}"></div>
+                        {{ if .error }}
+                        {{ if eq .error "security_challenge_not_completed_forgot_password"}}
+                        <p class="error">Please verify that you are a human.<br>If you don't see the verification widget,<br>Please refresh page.</p>
+                        {{ else if eq .error "security_challenge_failed_forgot_password"}}
+                        <p class="error">Security challenge failed,<br>Try again later if you are not a bot!</p>
+                        {{ end }}
+                        {{ end }} 
                         <div class="actions">
                             <button type="submit" class="button" value="Reset">Reset</button>
                         </div>
@@ -118,7 +142,11 @@
 {{ end }}
 
 <section
-        id="reset_password" {{ if .error }}{{ if eq .error "not_a_valid_password_reset"}} show {{ else }} hidden {{end}} {{ else if not .show_reset_password }} hidden {{ end }}>
+        id="reset-password" {{ if .error }}{{ if eq .error "not_a_valid_password_reset"}} show
+        {{ else if eq .error "security_challenge_not_completed_change_password" }} show
+        {{ else if eq .error "security_challenge_failed_change_password" }} show
+        {{ end }} {{ end }}
+        {{ if not .show_reset_password }} hidden {{ end }}>
     <header>
         <h3>Reset Password</h3>
     </header>
@@ -130,10 +158,18 @@
                 {{ end }}
             </section>
         {{ end }}
-        <form action="/users/password/change" method="post">
+        <form id="password-form" action="/users/password/change" method="post">
             <h1>Change Password</h1>
             {{ field "Password" "password" "" "password" "type=password" }}
             <input name="id" type="hidden" value="{{ .currentUser.ID }}"/>
+            <div class="cf-turnstile" data-sitekey="{{ .turnstile_site_key }}"></div>
+            {{ if .error }}
+            {{ if eq .error "security_challenge_not_completed_change_password"}}
+            <p class="error">Please verify that you are a human.<br>If you don't see the verification widget,<br>Please refresh page.</p>
+            {{ else if eq .error "security_challenge_failed_change_password"}}
+            <p class="error">Security challenge failed,<br>Try again later if you are not a bot!</p>
+            {{ end }}
+            {{ end }}
             <div class="actions">
                 <button type="submit" class="button">Change Password</button>
             </div>
@@ -190,20 +226,29 @@
                 </section>
             {{ end }}
             <section>
-                <form action="/users/keyword?redirectURL=/#topics" method="post" id="keywords">
+                <form id="topics-form" action="/users/keyword?redirectURL=/#topics" method="post" id="keywords">
                     <label>Topics: </label>
                     <textarea cols="28" rows="5" name="keywords" wrap="hard"
                               placeholder="Topic 1, Topic 2,...Topic 10"
                               maxlength="1000">{{ if .currentUser.Keywords }} {{ $length := len .currentUser.Keywords }} {{ range $i, $keyword := .currentUser.Keywords }} {{- $keyword -}}{{if lt $i (subtract $length 1) }},{{ end }}{{ end }}{{ end }}</textarea>
                     <label>Engagement: </label>
-                    <input type="checkbox" id="action-auto-like" name="autolike" value="True"
+                    <!-- Disable Auto Like to not violate Twitter Guidelines -->
+                    {{/*<input type="checkbox" id="action-auto-like" name="autolike" value="True"
                            {{ if .currentUser.AutoLike }}checked {{ end }}> <label
-                            for="action-auto-like">Auto Like</label>
+                            for="action-auto-like">Auto Like</label>*/}}
                     <input type="checkbox" id="action-email" name="email" value="True"
                            {{ if .currentUser.Notification }}checked {{ end }}><label
                             for="action-email">Email Digest</label>
+                    <div class="cf-turnstile" data-sitekey="{{ .turnstile_site_key }}"></div> 
                     <input name="authenticity_token" type="hidden" value="{{.authenticity_token}}">
                     <br>
+                    {{ if .error }}
+                    {{ if eq .error "security_challenge_not_completed_topics"}}
+                    <p class="error">Please verify that you are a human.<br>If you don't see the verification widget,<br>Please refresh page.</p>
+                    {{ else if eq .error "security_challenge_failed_topics"}}
+                    <p class="error">Security challenge failed,<br>Try again later if you are not a bot!</p>
+                    {{ end }}
+                    {{ end }}
                     <button type="submit" class="submit_button">SUBMIT</button>
                 </form>
             </section>
@@ -221,13 +266,76 @@
         </div>
     </section>
 {{ end }}
+
+{{ if .loggedIn  }}
+<hr>
+    <section id="profile-banner">
+        <header>
+            <h1>Real-time Tweet word cloud profile banner</h1>
+            <p>Set your Twitter profile banner automatically to word cloud from your tweets to let your potential followers know what you are tweeting about.</p>
+            <p><sup>PRO TIP</sup>Your tweets are classified for profile banner using the topics set in previous section.</p>
+        </header>
+        {{ if not .currentUser.Keywords }}
+        <div>
+            <p class="notice">Please set your favorite topics in the above section to activate this feature.</p>
+        </div>
+        {{ else if not .currentUser.TwitterOauthConnected }}
+        <div>
+            <p>
+                <a href="https://api.twitter.com/oauth/authorize?oauth_token={{ .oauthToken }}"><i>Login
+                        to Twitter &nearr;</i></a>
+            </p>
+            {{ if .error }}
+            {{ if eq .error "failed_twitter_connect_oauth1"}}
+                <p class="error">Unable to connect to the Twitter account. Please contact support</p>
+                <br/>
+            {{ else if eq .error "incorrect_twitter_account_banner"}}
+                <p class="error">Incorrect Twitter account,<br>Please use the same Twitter account<br/> You used for setting topics.</p>
+            {{ end }}
+            {{ end }}
+        </div>
+        {{ else}}
+        <form id="banner-form" method="post" action="/users/banner">
+            <input type="checkbox" id="action-profile-banner" name="profile-banner" value="True"
+            {{ if .currentUser.ProfileBanner }}checked {{ end }}><label
+             for="action-profile-banner">Set Tweet Word Cloud Profile Banner </label>
+            <div class="cf-turnstile" data-sitekey="{{ .turnstile_site_key }}"></div> 
+            <input name="authenticity_token" type="hidden" value="{{.authenticity_token}}">
+             <br>
+            <button type="submit" class="submit_button">SUBMIT</button>
+            {{ if .error }}
+            {{ if eq .error "security_challenge_not_completed_banner"}}
+            <p class="error">Please verify that you are a human.<br>If you don't see the verification widget,<br>Please refresh page.</p>
+            {{ else if eq .error "security_challenge_failed_banner"}}
+            <p class="error">Security challenge failed,<br>Try again later if you are not a bot!</p>
+            {{ end }}
+            {{ end }}
+            {{ if .notice }}
+            {{ if eq .notice "profile_banner_updated_set"}}
+            <p class="notice">Your Twitter profile banner would be <br/>updated automatically, <br/><b>When you start tweeting about any<br/> of your topics.</b></p>
+            {{ else if eq .notice "profile_banner_updated_removed"}}
+            <p class="notice">Your Twitter profile banner <br/><b>would not be updated automatically, <br/>Change existing profile banner manually.</b></p>
+            {{ end }}
+            {{ end }}
+        </form>
+        {{ end }}
+    </section>
+{{ end }}
+
+
 <hr>
 <section>
-        <blockquote>
-            <img alt="Quote" src="/assets/images/app/icon-quote.svg" height="80"><br>
-            "After using engage followers, I have been able to receive tweets from the followers of my personal, business accounts and engage with them."
-            <footer><img alt="engage followers icon" src="/assets/icons/android-icon-72x72.png" height="36"><br><br><i>- Abishek Muthian, Creator of engage followers</i></footer>
-        </blockquote>
+    <blockquote>
+        <img alt="Quote" src="/assets/images/app/icon-quote.svg" height="80"><br>
+        "After using engage followers, I have been able to receive tweets from the followers of my personal, business accounts and engage with them."
+        <footer><img alt="engage followers icon" src="/assets/icons/android-icon-72x72.png" height="36"><br><br><i>- Abishek Muthian, Creator of engage followers</i></footer>
+    </blockquote>
+    <figure>
+        <img alt="Screenshot of realtime tweet word cloud profile banner by engage followers" src="/assets/images/app/profile_banner_supershot.png">
+        <figcaption><i>Realtime tweet word cloud profile banner by engage followers</i></figcaption>
+    </figure>
+    <br/>
+    <br/>    
     <figure>
         <img alt="screenshot of a tweet classified by engage followers" src="/assets/images/app/dbarghya_das_supershot.png">
         <figcaption><i>A health need-gap related tweet identified by engage followers</i></figcaption>
@@ -255,6 +363,7 @@
                       method="POST">
                     <input type="hidden" name="priceId" value="{{ .priceId }}"/>
                     <input name="authenticity_token" type="hidden" value="{{.authenticity_token}}">
+                    <div class="cf-turnstile" data-sitekey="{{ .turnstile_site_key }}"></div> 
                     <button type="submit"
                             class="submit_button">{{ if not .currentUser.Subscription }}{{ .price }}{{ else }} MANAGE BILLING {{ end }}</button>
                 </form>
@@ -322,6 +431,14 @@
                 <li>
                     How do I choose my topics?
                     <p>Since engage followers uses machine learning to classify the tweets based on your topics, Choose broad ranging categories for your topics depending upon your needs. If you are using your personal Twitter account with engage followers then choose topics which interests you. If you use your business Twitter account, Then choose categories which represent your business so that when your followers tweet about the topic you can engage with them to grow your business.</p>
+                </li>
+                <li>
+                    How does the real-time tweet word cloud profile banner work?
+                    <p>When you tweet about the topics you've set, Your Twitter profile banner highlights those topics automatically.</p>
+                </li>
+                <li>
+                    Why do I need to connect my Twitter profile again for setting profile banner?
+                    <p>Setting profile banner on Twitter uses older official Twitter API which requires additional authentication.</p>
                 </li>
                 <li>
                     How do I connect additional Twitter account?

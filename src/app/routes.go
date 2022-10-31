@@ -29,6 +29,7 @@ func SetupRoutes() *mux.Mux {
 	router.Post("/users/keyword", useractions.HandleKeyword)
 	router.Get("/users/connect", useractions.HandleConnect)
 	router.Post("/users/logout", useractions.HandleLogout)
+	router.Post("/users/banner", useractions.HandleBanner)
 	router.Post("/users/password/reset", useractions.HandlePasswordResetSend)
 	router.Get("/users/password", useractions.HandlePasswordReset)
 	router.Post("/users/password/change", useractions.HandlePasswordChange)

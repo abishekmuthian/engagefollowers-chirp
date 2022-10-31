@@ -55,6 +55,7 @@ func NewWithColumns(cols map[string]interface{}) *User {
 	user.TwitterConnected = resource.ValidateBoolean(cols["twitter_connected"])
 	user.TwitterId = resource.ValidateString(cols["twitter_id"])
 	user.TwitterUsername = resource.ValidateString(cols["twitter_username"])
+	user.TwitterName = resource.ValidateString(cols["twitter_name"])
 	user.TwitterAccessToken = resource.ValidateString(cols["twitter_access_token"])
 	user.TwitterRefreshToken = resource.ValidateString(cols["twitter_refresh_token"])
 	user.TwitterTokenExpiryTime = resource.ValidateTime(cols["twitter_token_expiry_time"])
@@ -66,7 +67,10 @@ func NewWithColumns(cols map[string]interface{}) *User {
 	user.TwitterOauthTokenSecret = resource.ValidateString(cols["twitter_oauth_token_secret"])
 	user.TwitterOauthConnected = resource.ValidateBoolean(cols["twitter_oauth_connected"])
 
+	// AutoLike feature has been disabled to prevent ToS violation
 	user.AutoLike = resource.ValidateBoolean(cols["auto_like"])
+
+	user.ProfileBanner = resource.ValidateBoolean(cols["profile_banner"])
 
 	return user
 }

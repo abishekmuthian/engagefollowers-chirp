@@ -1,7 +1,14 @@
 package useractions
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
 	"github.com/abishekmuthian/engagefollowers/src/lib/auth"
 	"github.com/abishekmuthian/engagefollowers/src/lib/auth/can"
 	m "github.com/abishekmuthian/engagefollowers/src/lib/mandrill"
@@ -12,8 +19,6 @@ import (
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/log"
 	"github.com/abishekmuthian/engagefollowers/src/lib/session"
 	"github.com/abishekmuthian/engagefollowers/src/users"
-	"net/http"
-	"time"
 )
 
 const (
@@ -37,6 +42,69 @@ func HandlePasswordResetSend(w http.ResponseWriter, r *http.Request) error {
 		return server.InternalError(err)
 	}
 
+	// Using turnstile to verify users
+	if len(params.Get("cf-turnstile-response")) > 0 {
+		if string(params.Get("cf-turnstile-response")) != "" {
+
+			type turnstileResponse struct {
+				Success      bool     `json:"success"`
+				Challenge_ts string   `json:"challenge_ts"`
+				Hostname     string   `json:"hostname"`
+				ErrorCodes   []string `json:"error-codes"`
+				Action       string   `json:"login"`
+				Cdata        string   `json:"cdata"`
+			}
+
+			var remoteIP string
+			var siteVerify turnstileResponse
+
+			if config.Production() {
+				// Get the IP from Cloudflare
+				remoteIP = r.Header.Get("CF-Connecting-IP")
+
+			} else {
+				// Extract the IP from the address
+				remoteIP = r.RemoteAddr
+				forward := r.Header.Get("X-Forwarded-For")
+				if len(forward) > 0 {
+					remoteIP = forward
+				}
+			}
+
+			postBody := url.Values{}
+			postBody.Set("secret", config.Get("turnstile_secret_key"))
+			postBody.Set("response", string(params.Get("cf-turnstile-response")))
+			postBody.Set("remoteip", remoteIP)
+
+			resp, err := http.Post("https://challenges.cloudflare.com/turnstile/v0/siteverify", "application/x-www-form-urlencoded", strings.NewReader(postBody.Encode()))
+			if err != nil {
+				log.Info(log.V{"Upload, An error occurred while sending the request to the siteverify": err})
+				return server.InternalError(err)
+			}
+			defer resp.Body.Close()
+
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				log.Error(log.V{"Upload, An error occurred while reading the response from the siteverify": err})
+				return server.InternalError(err)
+			}
+
+			json.Unmarshal(body, &siteVerify)
+
+			if !siteVerify.Success {
+				// Security challenge failed
+				log.Error(log.V{"Upload, Security challenge failed": siteVerify.ErrorCodes[0]})
+				return server.Redirect(w, r, "/?error=security_challenge_failed_forgot_password#forgot-password")
+			}
+		} else {
+			log.Error(log.V{"Upload, Security challenge unable to process": "response not received from user"})
+			return server.Redirect(w, r, "/?error=security_challenge_not_completed_forgot_password#forgot-password")
+		}
+	} else {
+		// Security challenge not completed
+		return server.Redirect(w, r, "/?error=security_challenge_not_completed_forgot_password#forgot-password")
+	}
+
 	// Find the user by email (if not found let them know)
 	// Find the user by hex token in the db
 	email := params.Get("email")
@@ -44,7 +112,7 @@ func HandlePasswordResetSend(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		//return server.Redirect(w, r, "/users/password/reset?message=invalid_email")
 		//return server.NotAuthorizedError(err, "Invalid email id, please enter the email id used with this account.")
-		return server.Redirect(w, r, "/?error=not_a_valid_account#forgot_password")
+		return server.Redirect(w, r, "/?error=not_a_valid_account#forgot-password")
 	}
 
 	// Generate a random token and url for the email
@@ -101,7 +169,7 @@ func HandlePasswordResetSend(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// Tell the user what we have done
-	return server.Redirect(w, r, "/?notice=password_reset_sent#forgot_password")
+	return server.Redirect(w, r, "/?notice=password_reset_sent#forgot-password")
 }
 
 // HandlePasswordReset responds to GET /users/password?token=DEADFISH
@@ -155,7 +223,7 @@ func HandlePasswordReset(w http.ResponseWriter, r *http.Request) error {
 
 	// Redirect to change password
 	// Tell the user what we have done
-	return server.Redirect(w, r, "/?show_reset_password=true#reset_password")
+	return server.Redirect(w, r, "/?show_reset_password=true#reset-password")
 }
 
 // HandlePasswordChange responds to  gets the new password, validates it and updates it in the db
@@ -164,6 +232,69 @@ func HandlePasswordChange(w http.ResponseWriter, r *http.Request) error {
 	params, err := mux.Params(r)
 	if err != nil {
 		return server.InternalError(err)
+	}
+
+	// Using turnstile to verify users
+	if len(params.Get("cf-turnstile-response")) > 0 {
+		if string(params.Get("cf-turnstile-response")) != "" {
+
+			type turnstileResponse struct {
+				Success      bool     `json:"success"`
+				Challenge_ts string   `json:"challenge_ts"`
+				Hostname     string   `json:"hostname"`
+				ErrorCodes   []string `json:"error-codes"`
+				Action       string   `json:"login"`
+				Cdata        string   `json:"cdata"`
+			}
+
+			var remoteIP string
+			var siteVerify turnstileResponse
+
+			if config.Production() {
+				// Get the IP from Cloudflare
+				remoteIP = r.Header.Get("CF-Connecting-IP")
+
+			} else {
+				// Extract the IP from the address
+				remoteIP = r.RemoteAddr
+				forward := r.Header.Get("X-Forwarded-For")
+				if len(forward) > 0 {
+					remoteIP = forward
+				}
+			}
+
+			postBody := url.Values{}
+			postBody.Set("secret", config.Get("turnstile_secret_key"))
+			postBody.Set("response", string(params.Get("cf-turnstile-response")))
+			postBody.Set("remoteip", remoteIP)
+
+			resp, err := http.Post("https://challenges.cloudflare.com/turnstile/v0/siteverify", "application/x-www-form-urlencoded", strings.NewReader(postBody.Encode()))
+			if err != nil {
+				log.Info(log.V{"Upload, An error occurred while sending the request to the siteverify": err})
+				return server.InternalError(err)
+			}
+			defer resp.Body.Close()
+
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				log.Error(log.V{"Upload, An error occurred while reading the response from the siteverify": err})
+				return server.InternalError(err)
+			}
+
+			json.Unmarshal(body, &siteVerify)
+
+			if !siteVerify.Success {
+				// Security challenge failed
+				log.Error(log.V{"Upload, Security challenge failed": siteVerify.ErrorCodes[0]})
+				return server.Redirect(w, r, "/?error=security_challenge_failed_change_password#reset-password")
+			}
+		} else {
+			log.Error(log.V{"Upload, Security challenge unable to process": "response not received from user"})
+			return server.Redirect(w, r, "/?error=security_challenge_not_completed_change_password#reset-password")
+		}
+	} else {
+		// Security challenge not completed
+		return server.Redirect(w, r, "/?error=security_challenge_not_completed_change_password#reset-password")
 	}
 
 	// Find the user
@@ -189,7 +320,7 @@ func HandlePasswordChange(w http.ResponseWriter, r *http.Request) error {
 
 	// Password must be at least 8 characters
 	if len(pass) < 8 {
-		return server.Redirect(w, r, "/?error=not_a_valid_password_reset#reset_password")
+		return server.Redirect(w, r, "/?error=not_a_valid_password_reset#reset-password")
 	}
 
 	// Set the password hash from the password

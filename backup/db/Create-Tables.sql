@@ -21,6 +21,7 @@ CREATE TABLE users
     twitter_connected    boolean,
     twitter_id           text,
     twitter_username     text,
+    twitter_name         text,   
     twitter_access_token text,
     twitter_refresh_token text,
     twitter_token_expiry_time timestamp,
@@ -30,7 +31,8 @@ CREATE TABLE users
     auto_like             boolean,
     twitter_oauth_token   text,
     twitter_oauth_token_secret text,
-    twitter_oauth_connected boolean
+    twitter_oauth_connected boolean,
+    profile_banner        boolean
 );
 
 CREATE TABLE subscriptions

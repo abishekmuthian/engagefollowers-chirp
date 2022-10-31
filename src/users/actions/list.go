@@ -18,6 +18,7 @@ import (
 	"github.com/abishekmuthian/engagefollowers/src/lib/query"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/config"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/log"
+	"github.com/abishekmuthian/engagefollowers/src/users"
 	userModel "github.com/abishekmuthian/engagefollowers/src/users"
 	"github.com/go-redis/redis/v8"
 	"github.com/michimani/gotwi"
@@ -30,8 +31,6 @@ import (
 	listTweetLookupInput "github.com/michimani/gotwi/list/listtweetlookup/types"
 	"github.com/michimani/gotwi/list/managelist"
 	manageListType "github.com/michimani/gotwi/list/managelist/types"
-	"github.com/michimani/gotwi/tweet/like"
-	tweetLikeType "github.com/michimani/gotwi/tweet/like/types"
 	"github.com/michimani/gotwi/user/follow"
 	followType "github.com/michimani/gotwi/user/follow/types"
 	"github.com/michimani/gotwi/user/userlookup"
@@ -310,6 +309,11 @@ func GetTweetsOfFollowers() {
 					log.Info(log.V{"Username": gotwi.StringValue(u.Data.Username)})
 					log.Info(log.V{"Followers Count": gotwi.IntValue(u.Data.PublicMetrics.FollowersCount)})
 
+					// Check if the Twitter name has been updated
+					if user.TwitterName != gotwi.StringValue(u.Data.Name) {
+						updateTwitterName(user, gotwi.StringValue(u.Data.Name))
+					}
+
 					// Check if the list is older than 24 hours
 					currentTime := time.Now().UTC()
 
@@ -342,7 +346,7 @@ func GetTweetsOfFollowers() {
 
 					listExists, err := checkIfListExists(user.TwitterListID, c)
 
-					if err == nil && listExists && (user.AutoLike || user.Notification) {
+					if err == nil && listExists && user.Notification { // Not checking if the user has AutoLike enabled as the feature has been disabled
 						listTweetLookupInput := listTweetLookupInput.ListInput{
 							ID:              user.TwitterListID,
 							MaxResults:      15,
@@ -398,11 +402,22 @@ func GetTweetsOfFollowers() {
 
 										if len(categories) > 0 {
 											log.Info(log.V{"Tweet matches categories": categories})
+
+											// Check if the tweet is from the user if the user chosen dynamic profile banner
+											if gotwi.StringValue(tweet.AuthorID) == user.TwitterId {
+												log.Info(log.V{"List, Tweet is from the user": user.TwitterUsername})
+												for _, category := range categories {
+													rdb.IncrBy(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+":"+category+config.Get("redis_key_profile_banner_label_suffix"), 1)
+												}
+											}
+
 											tweetText := "<br/><br/>" + gotwi.StringValue(tweet.Text) + "<br/><br/>" + "From " + tweetRealName + "(" + "<a style='color: #1363DF;' href='https://twitter.com/" + tweetUserName + "/" + "status/" + gotwi.StringValue(tweet.ID) + "'>" + "@" + tweetUserName + "</a>" + ")" + "<br/><br/>" + "Matches topics: " + fmt.Sprintf("%v", categories) + "<br/><br/>" + "<hr>"
 											log.Info(log.V{"Formatted Tweet": tweetText})
 											rdb.SAdd(ctx, config.Get("redis_key_prefix")+strconv.FormatInt(user.ID, 10)+config.Get("redis_key_tweets_suffix"), tweetText)
 
-											if user.AutoLike {
+											// Like tweet if its not a self tweet
+											// Disabling Auto Like to not violate Twitter Guidelines
+											/* if user.AutoLike && (gotwi.StringValue(tweet.AuthorID) != user.TwitterId) {
 												err := likeTweets(user.TwitterId, gotwi.StringValue(tweet.ID), c)
 
 												if err == nil {
@@ -411,7 +426,7 @@ func GetTweetsOfFollowers() {
 													log.Error(log.V{"Error liking tweet": err})
 													getDetailedError(err)
 												}
-											}
+											} */
 										}
 									} else {
 										askUserToSetTopics(rdb, ctx, user, "User has not set the topics")
@@ -426,8 +441,10 @@ func GetTweetsOfFollowers() {
 						}
 					} else {
 						log.Error(log.V{"Unable to find the list for tweet lookup": err})
-						log.Info(log.V{"User Auto Like": user.AutoLike, "User Notification": user.Notification, "List exists:": listExists})
-						// TODO: Send user email about both auto-like and email digest is disabled
+						// log.Info(log.V{"User Auto Like": user.AutoLike, "User Notification": user.Notification, "List exists:": listExists})
+						// Auto Like is disabled to not violate Twitter ToS
+						log.Info(log.V{"User Notification": user.Notification, "List exists:": listExists})
+						// TODO: Send user email about email digest is disabled
 						// Not doing it now as email digest is a default choice
 						continue
 					}
@@ -625,7 +642,8 @@ func classifyTweet(tweetText string, keywords []string) []string {
 }
 
 // likeTweets likes the tweets
-func likeTweets(id string, tweetID string, c *gotwi.Client) error {
+// Disabling Auto Like to not violate Twitter ToS
+/* func likeTweets(id string, tweetID string, c *gotwi.Client) error {
 	tweetLikeInput := tweetLikeType.CreateInput{
 		ID:      id,
 		TweetID: tweetID,
@@ -638,7 +656,7 @@ func likeTweets(id string, tweetID string, c *gotwi.Client) error {
 	}
 
 	return err
-}
+} */
 
 // getTwitterFollowers fetches the twitter followers, A Maximum of 1000 at time
 func getTwitterFollowers(user *userModel.User, c *gotwi.Client, paginationToken string) (*followType.ListFollowersOutput, error) {
@@ -729,5 +747,14 @@ func Shuffle(vals []string) {
 
 		vals[n-1], vals[randIndex] = vals[randIndex], vals[n-1]
 		vals = vals[:n-1]
+	}
+}
+
+func updateTwitterName(user *users.User, name string) {
+	userParams := make(map[string]string)
+	userParams["twitter_name"] = name
+	err := user.Update(userParams)
+	if err != nil {
+		log.Error(log.V{"List, Error updating twitter name in user": err})
 	}
 }

@@ -12,7 +12,7 @@ Knowing the common interests with our followers can help build meaningful relati
 ### How
 Here's where **engage followers** does its magic! All we need to do is connect our Twitter account and set our favorite topics.
 
-Tweets from our followers are classified using Machine Learning (So it's not just based on keywords). We can choose to receive an email digest at the end of the day containing those tweets which matches our topics (and/or) automatically like the tweet to find them in the Likes section sooner.
+Tweets from our followers are classified using Machine Learning (So it's not just based on keywords). We can choose to receive an email digest at the end of the day containing those tweets which matches our topics.
 
 We can then choose to engage with those tweets from our followers to build meaningful relationships with them.
 
@@ -20,12 +20,19 @@ We can then choose to engage with those tweets from our followers to build meani
 [![engage followers demo video](backup/demo/video_thumbnail.png)](https://www.youtube.com/watch?v=9ANVQBrb9OE)
 Clicking the above image would open the demo video in YouTube.
 
+### Features
+1. Content discovery of tweets from **our followers** according to our interests.
+2. Real-time Tweet word cloud profile banner based on our tweets.
+
 ### Technical How
-1. A 100 randomized Twitter followers are stored in a Twitter list (The list is rotated every 24 hours). 
-2. Tweets from the members of the list are retrieved at regular intervals.
-3. New tweets are classified using a BART model using our set **topics of interest** as labels.
-4. Tweets which matches our interests are stored to be sent via email digest and/or liked.
-5. An email digest containing the tweets from the followers, Classified according to our interests are sent.
+1. A 100 randomized Twitter followers are stored in a Twitter list (The list is rotated every 24 hours).
+2. If real-time tweet word cloud profile banner is enabled, Our profile is added to that list as well.
+3. Tweets from the members of the list are retrieved at regular intervals.
+4. New tweets are classified using a BART Machine Learning model using our set **topics of interest** as labels.
+5. Tweets from our followers which matches our interests are stored to be sent via email digest.
+6. When our own tweets matches the topics, The count for the topics are stored and incremented.
+7. When the count for stored topics is >0, Profile banner of the user is updated with the word cloud of the topics.  
+8. An email digest containing the tweets from the followers, Classified according to our interests are sent.
 
 ## Testing Setup
 
@@ -130,9 +137,10 @@ After ensuring that Postgres, Redis and Machine Learning server is running,
 ### Usage
 1. Visit the engage followers project domain you have set in `root_url` with set `port` e.g. `localhost.com:3000`.
 2. Register a user account (With a valid email address).
-3. Connect your twitter account (With couple of followers with recent tweets) and Authorize the app.
+3. Connect your Twitter account (With couple of followers with recent tweets) and Authorize the app. This uses Twitter API v2 Oauth 2.0 authentication.
 4. Set the topics for classification.
-5. **Email Digest** is required (selected by default) for receiving the classified tweets by email and/or **Auto Like** for automatically liking those tweets to find them in the Likes section of your Twitter profile sooner.
+5. **Email Digest** is required (selected by default) for receiving the classified tweets by email.
+6. For **Real-time Tweet word cloud profile banner** connect the Twitter account(for Oauth1.0) and Enable **Set Tweet Word Cloud Profile Banner**.
 
 ### Miscellaneous Testing Notes
 1. Tweet ids are stored in redis after processing to avoid redundant processing, So for testing if there are no new tweets from the followers, the application needs to be run when there are new tweets(Or should tweet from a follower account before each test).
@@ -150,7 +158,9 @@ Fragmenta: https://github.com/fragmenta licensed under [The MIT License](https:/
 
 gotwi: https://github.com/michimani/gotwi licensed under [The MIT License](https://github.com/michimani/gotwi/blob/main/LICENCE).
 
-Go-OAuth1.0: https://github.com/klaidas/go-oauth1 licensed under [The MIT License](https://github.com/klaidas/go-oauth1/blob/master/LICENSE).
+oauth1: https://github.com/dghubble/oauth1 licensed under [The MIT License](https://github.com/dghubble/oauth1/blob/main/LICENSE).
+
+wordclouds: https://github.com/psykhi/wordclouds licensed under [Apache-2.0 license](https://github.com/psykhi/wordclouds/blob/master/LICENSE).
 
 resty: https://github.com/go-resty/resty licensed under [The MIT License](https://github.com/go-resty/resty/blob/master/LICENSE).
 

@@ -63,6 +63,7 @@ func HandleConnect(w http.ResponseWriter, r *http.Request) error {
 	code := params.Get("code")
 	log.Info(log.V{"Url Param 'code' is": string(code)})
 
+	// Oauth 1
 	if oauth_token != "" && oauth_verifier != "" {
 		log.Info(log.V{"Twitter Connect": "Oauth1.0a callback"})
 
@@ -116,7 +117,15 @@ func HandleConnect(w http.ResponseWriter, r *http.Request) error {
 					oAuth1Token.OauthToken = value[0]
 				} else if key == "oauth_token_secret" {
 					oAuth1Token.OauthTokenSecret = value[0]
+				} else if key == "screen_name" {
+					oAuth1Token.ScreenName = value[0]
+				} else if key == "user_id" {
+					oAuth1Token.UserId = value[0]
 				}
+			}
+
+			if oAuth1Token.UserId != currentUser.TwitterId {
+				return server.Redirect(w, r, "/?error=incorrect_twitter_account_banner#profile-banner")
 			}
 
 			if oAuth1Token.OauthToken != "" && oAuth1Token.OauthTokenSecret != "" {
@@ -134,6 +143,8 @@ func HandleConnect(w http.ResponseWriter, r *http.Request) error {
 			}
 
 		}
+
+		return server.Redirect(w, r, "/#profile-banner")
 
 	} else if state != "" && code != "" {
 		log.Info(log.V{"Twitter Connect": "Oauth2.0 callback"})
@@ -233,6 +244,7 @@ func HandleConnect(w http.ResponseWriter, r *http.Request) error {
 							userParams["twitter_connected"] = "True"
 							userParams["twitter_id"] = gotwi.StringValue(u.Data.ID)
 							userParams["twitter_username"] = gotwi.StringValue(u.Data.Username)
+							userParams["twitter_name"] = gotwi.StringValue(u.Data.Name)
 							userParams["twitter_access_token"] = token.AccessToken
 							userParams["twitter_refresh_token"] = token.RefreshToken
 							userParams["twitter_token_expiry_time"] = query.TimeString(token.ExpiryTime)
@@ -261,6 +273,8 @@ func HandleConnect(w http.ResponseWriter, r *http.Request) error {
 			log.Error(log.V{"Error authenticating authenticity token": err})
 			return server.Redirect(w, r, "/?error=failed_twitter_connect#connect")
 		}
+
+		return server.Redirect(w, r, "/#topics")
 	}
 
 	return server.Redirect(w, r, "/")

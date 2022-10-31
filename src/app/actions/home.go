@@ -71,15 +71,18 @@ func HandleHome(w http.ResponseWriter, r *http.Request) error {
 
 		if !currentUser.TwitterOauthConnected {
 			oauthToken, err := useractions.GenerateRequestToken(w, r)
-
 			if err != nil {
 				// Don't show Twitter dynamic banner flow
+				log.Error(log.V{"Home, Error in generating request token for oauth1": err})
 			} else {
 				view.AddKey("oauthToken", oauthToken.OauthToken)
 			}
 		}
 
 	}
+
+	// Set Cloudflare turnstile site key
+	view.AddKey("turnstile_site_key", config.Get("turnstile_site_key"))
 
 	//view.AddKey("validationDeadline", math.Round(time.Date(2021, time.June, 30, 0, 0, 0, 0, time.UTC).Sub(time.Now()).Hours()/24))
 
@@ -117,33 +120,6 @@ func HandleHome(w http.ResponseWriter, r *http.Request) error {
 			view.AddKey("price", config.Get("stripe_price_US"))
 		}
 	}
-
-	// Test profile banner update
-
-	// Read the entire file into a byte slice
-	// bytes, err := ioutil.ReadFile("./public/assets/images/app/wordcloud.png")
-	// if err != nil {
-	// 	log.Error(log.V{"Update profile banner": err})
-	// }
-
-	// var base64Encoding string
-	// /*
-	// 			// Prepend the appropriate URI scheme header depending
-	// 			// on the MIME type
-	// 	        // Mime type results in media error on Twitter
-	// 			// Determine the content type of the image file
-	// 			    mimeType := http.DetectContentType(bytes)
-	// 			    switch mimeType {
-	// 			   	case "image/jpeg":
-	// 			   		base64Encoding += "data:image/jpeg;base64,"
-	// 			   	case "image/png":
-	// 			   		base64Encoding += "data:image/png;base64,"
-	// 			   	} */
-
-	// // Append the base64 encoded output
-	// base64Encoding = base64.StdEncoding.EncodeToString(bytes)
-
-	// useractions.UpdateProfileBanner(currentUser, base64Encoding)
 
 	return view.Render()
 }

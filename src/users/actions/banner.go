@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/abishekmuthian/engagefollowers/src/lib/mux"
@@ -15,13 +14,14 @@ import (
 	"github.com/abishekmuthian/engagefollowers/src/lib/session"
 )
 
-// HandleKeyword handles the POST to add keywords
-func HandleKeyword(w http.ResponseWriter, r *http.Request) error {
+// HandleBanner handles enabling profile banner
+// Responds to the post reques /banner
+func HandleBanner(w http.ResponseWriter, r *http.Request) error {
 
 	// Check the authenticity token
 	err := session.CheckAuthenticity(w, r)
 	if err != nil {
-		return err
+		return server.NotAuthorizedError(err)
 	}
 
 	// Check if logged in
@@ -31,12 +31,7 @@ func HandleKeyword(w http.ResponseWriter, r *http.Request) error {
 		return server.NotAuthorizedError(err)
 	}
 
-	// Enable for Trial
-	/* 	if !currentUser.TrialEnd.IsZero() && !currentUser.Subscription {
-	   		return server.Redirect(w, r, "/?error=not_subscribed")
-	   	}
-	*/
-	// Fetch the params
+	// Get the params
 	params, err := mux.Params(r)
 	if err != nil {
 		return server.InternalError(err)
@@ -94,86 +89,36 @@ func HandleKeyword(w http.ResponseWriter, r *http.Request) error {
 			if !siteVerify.Success {
 				// Security challenge failed
 				log.Error(log.V{"Upload, Security challenge failed": siteVerify.ErrorCodes[0]})
-				return server.Redirect(w, r, "/?error=security_challenge_failed_topics#topics")
+				return server.Redirect(w, r, "/?error=security_challenge_failed_banner#profile-banner")
 			}
 		} else {
 			log.Error(log.V{"Upload, Security challenge unable to process": "response not received from user"})
-			return server.Redirect(w, r, "/?error=security_challenge_not_completed_topics#topics")
+			return server.Redirect(w, r, "/?error=security_challenge_not_completed_banner#profile-banner")
 		}
 	} else {
 		// Security challenge not completed
-		return server.Redirect(w, r, "/?error=security_challenge_not_completed_topics#topics")
+		return server.Redirect(w, r, "/?error=security_challenge_not_completed_banner#profile-banner")
 	}
 
-	keywordsParam := params.Get("keywords")
-	// Disabling Auto Like to not violate Twitter guidelines even though its not aggressive
-	// autoLikeParam := params.Get("autolike")
-
-	emailParam := params.Get("email")
-
-	// log.Info(log.V{"Auto Like": autoLikeParam})
-	log.Info(log.V{"Email": emailParam})
-
-	// Stop the attack
-	if len(keywordsParam) > 1000 {
-		return server.Redirect(w, r, "/?error=not_a_valid_topic")
-	}
-
-	keywordsParam = strings.TrimSpace(keywordsParam)
-
-	var keywords []string
-
-	if len(keywordsParam) == 0 {
-		UpdateKeywords(keywords, currentUser.ID)
-		return server.Redirect(w, r, "/?notice=topics_removed")
-	} else {
-		re := regexp.MustCompile("^([\\w\\s,]*[^\\s,])*$")
-		if !(re.MatchString(keywordsParam)) {
-			return server.Redirect(w, r, "/?error=not_a_valid_topic")
-		}
-	}
-
-	keywordsTemp := strings.Split(keywordsParam, ",")
-
-	if len(keywordsTemp) > 10 {
-		return server.Redirect(w, r, "/?error=not_a_valid_topic")
-	}
-
-	for _, keyword := range keywordsTemp {
-		if len(keyword) > 1000 {
-			return server.Redirect(w, r, "/?error=not_a_valid_topic")
-		}
-		keywords = append(keywords, strings.TrimSpace(keyword))
-	}
-
-	if len(keywords) > 25 {
-		return server.InternalError(err)
-	}
-
-	log.Info(log.V{"Keywords": keywords})
-
-	// Store the keywords (Topics) in the user database
-	UpdateKeywords(keywords, currentUser.ID)
+	profileBannerParam := params.Get("profile-banner")
 
 	userParams := make(map[string]string)
 
-	// Disabling Auto Like to not violate Twitter guidelines
-	/* 	if len(autoLikeParam) > 0 && autoLikeParam == "True" {
-	   		userParams["auto_like"] = autoLikeParam
-	   	} else {
-	   		userParams["auto_like"] = "False"
-	   	} */
-
-	if len(emailParam) > 0 && emailParam == "True" {
-		userParams["notification"] = emailParam
+	if len(profileBannerParam) > 0 && profileBannerParam == "True" {
+		userParams["profile_banner"] = profileBannerParam
 	} else {
-		userParams["notification"] = "False"
+		userParams["profile_banner"] = "False"
 	}
 
 	err = currentUser.Update(userParams)
 	if err != nil {
-		log.Error(log.V{"Error updating twitter token in user": err})
+		log.Error(log.V{"Error updating profile banner in user": err})
+		return nil
 	}
 
-	return server.Redirect(w, r, "/?notice=topics_added")
+	if userParams["profile_banner"] == "True" {
+		return server.Redirect(w, r, "/?notice=profile_banner_updated_set#profile-banner")
+	} else {
+		return server.Redirect(w, r, "/?notice=profile_banner_updated_removed#profile-banner")
+	}
 }

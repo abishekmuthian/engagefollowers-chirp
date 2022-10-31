@@ -1,13 +1,13 @@
 package useractions
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/abishekmuthian/engagefollowers/src/lib/query"
-	"github.com/abishekmuthian/engagefollowers/src/lib/server"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/config"
 	"github.com/abishekmuthian/engagefollowers/src/lib/server/log"
 	"github.com/abishekmuthian/engagefollowers/src/users"
@@ -29,36 +29,6 @@ func UpdateFollowers(followers []string, userId int64) error {
 
 // UpdateProfileBanner updates the Twitter Profile Banner
 func UpdateProfileBanner(currentUser *users.User, base64Image string) error {
-	/* 	method := http.MethodPost
-	   	url := "https://api.twitter.com/1.1/account/update_profile_banner.json"
-
-	   	auth := oauth1.OAuth1{
-	   		ConsumerKey:    config.Current.Get("twitter_api_key"),
-	   		ConsumerSecret: config.Current.Get("twitter_api_key_secret"),
-	   		AccessToken:    currentUser.TwitterOauthToken,
-	   		AccessSecret:   currentUser.TwitterOauthTokenSecret,
-	   	}
-
-	   	authHeader := auth.BuildOAuth1Header(method, url, map[string]string{
-	   		"banner": base64Image,
-	   	})
-
-	   	req, err := http.NewRequest(method, url, nil)
-
-	   	if err != nil {
-	   		log.Error(log.V{"Update, Profile banner update, Error in request": err})
-	   		return err
-	   	}
-
-	   	req.Header.Set("Authorization", authHeader)
-	   	// req.URL.RawQuery = req.URL.Query().Encode()
-
-	   	if res, err := http.DefaultClient.Do(req); err == nil {
-	   		fmt.Println(res.StatusCode)
-	   	} else {
-	   		log.Error(log.V{"Update, Profile banner update, Error in response": err})
-	   		return err
-	   	} */
 
 	config := oauth1.NewConfig(config.Current.Get("twitter_api_key"), config.Current.Get("twitter_api_key_secret"))
 	token := oauth1.NewToken(currentUser.TwitterOauthToken, currentUser.TwitterOauthTokenSecret)
@@ -72,7 +42,7 @@ func UpdateProfileBanner(currentUser *users.User, base64Image string) error {
 
 	if err != nil {
 		log.Error(log.V{"Twitter update banner, Error in parse request URI": err})
-		server.InternalError(err)
+		return err
 	}
 
 	urlStr := u.String()
@@ -89,18 +59,31 @@ func UpdateProfileBanner(currentUser *users.User, base64Image string) error {
 
 	if err != nil {
 		log.Error(log.V{"Twitter Connect Oauth1.0, Error in getting response": err})
-		server.InternalError(err)
+		return err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(log.V{"Twitter Connect Oauth1.0, Error in parsing response": err})
-		server.InternalError(err)
+		return err
 	}
 
 	//Convert the body to type string
 	sb := string(body)
-	log.Info(log.V{"Twitter Response": sb})
+	log.Info(log.V{"Twitter Response after updating profile": sb})
+
+	params, err := url.ParseQuery(sb)
+	if err != nil {
+		log.Error(log.V{"requestToken, Error parsing response": err})
+		return err
+	}
+
+	for key, value := range params {
+		if key == "errors" {
+			err := errors.New(value[0])
+			return err
+		}
+	}
 
 	return err
 }

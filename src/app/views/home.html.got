@@ -145,7 +145,8 @@
         id="reset-password" {{ if .error }}{{ if eq .error "not_a_valid_password_reset"}} show
         {{ else if eq .error "security_challenge_not_completed_change_password" }} show
         {{ else if eq .error "security_challenge_failed_change_password" }} show
-        {{ else if not .show_reset_password }} hidden {{ end }} {{ end }}>
+        {{ end }} {{ end }}
+        {{ if not .show_reset_password }} hidden {{ end }}>
     <header>
         <h3>Reset Password</h3>
     </header>

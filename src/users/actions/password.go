@@ -286,15 +286,15 @@ func HandlePasswordChange(w http.ResponseWriter, r *http.Request) error {
 			if !siteVerify.Success {
 				// Security challenge failed
 				log.Error(log.V{"Upload, Security challenge failed": siteVerify.ErrorCodes[0]})
-				return server.Redirect(w, r, "/?error=security_challenge_failed_change_password#reset-password")
+				return server.Redirect(w, r, "/?error=security_challenge_failed_change_password&show_reset_password=true#reset-password")
 			}
 		} else {
 			log.Error(log.V{"Upload, Security challenge unable to process": "response not received from user"})
-			return server.Redirect(w, r, "/?error=security_challenge_not_completed_change_password#reset-password")
+			return server.Redirect(w, r, "/?error=security_challenge_not_completed_change_password&show_reset_password=true#reset-password")
 		}
 	} else {
 		// Security challenge not completed
-		return server.Redirect(w, r, "/?error=security_challenge_not_completed_change_password#reset-password")
+		return server.Redirect(w, r, "/?error=security_challenge_not_completed_change_password&show_reset_password=true#reset-password")
 	}
 
 	// Find the user
@@ -320,7 +320,7 @@ func HandlePasswordChange(w http.ResponseWriter, r *http.Request) error {
 
 	// Password must be at least 8 characters
 	if len(pass) < 8 {
-		return server.Redirect(w, r, "/?error=not_a_valid_password_reset#reset-password")
+		return server.Redirect(w, r, "/?error=not_a_valid_password_reset&show_reset_password=true#reset-password")
 	}
 
 	// Set the password hash from the password

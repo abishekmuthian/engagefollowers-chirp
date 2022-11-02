@@ -22,7 +22,9 @@ Clicking the above image would open the demo video in YouTube.
 
 ### Features
 1. Content discovery of tweets from **our followers** according to our interests.
+   ![Tweet from a follower matching my interest](backup/demo/dbarghya_das_supershot.png)
 2. Real-time Tweet word cloud profile banner based on our tweets.
+   ![My Twitter profile banner showing my interests](backup/demo/profile_banner_supershot.png)
 
 ### Technical How
 1. A 100 randomized Twitter followers are stored in a Twitter list (The list is rotated every 24 hours).
